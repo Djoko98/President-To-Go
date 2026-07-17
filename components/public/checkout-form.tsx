@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useCartStore } from "@/features/cart/store";
 import { useCartHydration } from "@/features/cart/use-cart-hydration";
+import { saveActiveOrder } from "@/lib/active-order";
 import { formatBelgradeTime } from "@/lib/dates";
 import { calculateCartTotal, formatMoney } from "@/lib/money";
 import { checkoutFormSchema, type CheckoutFormInput } from "@/lib/validation/checkout";
@@ -48,13 +49,14 @@ export function CheckoutForm() {
   const submit = handleSubmit(async (values) => {
     try {
       const response = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...values, items: items.map((item) => ({ productId: item.product.id, quantity: item.quantity })) }) });
-      const payload = await response.json().catch(() => ({})) as { public_token?: string; error?: string; fields?: Record<string, string[]> };
+      const payload = await response.json().catch(() => ({})) as { public_token?: string; order_number?: string; error?: string; fields?: Record<string, string[]> };
       if (!response.ok || !payload.public_token) {
         const message = payload.error ?? "Porudžbina nije poslata. Pokušaj ponovo.";
         setError("root", { message });
         toast.error(message);
         return;
       }
+      saveActiveOrder({ token: payload.public_token, orderNumber: payload.order_number ?? null });
       clear();
       router.replace(`/porudzbina/${payload.public_token}`);
     } catch {

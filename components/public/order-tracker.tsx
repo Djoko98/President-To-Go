@@ -2,9 +2,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { Check, Clock3, Phone, RefreshCw } from "lucide-react";
 import { createClient } from "@/lib/supabase/browser";
+import { clearActiveOrder, saveActiveOrder } from "@/lib/active-order";
 import { formatBelgradeTime } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
-import { ORDER_STATUS_LABELS } from "@/lib/order-status";
+import { isActiveOrderStatus, ORDER_STATUS_LABELS } from "@/lib/order-status";
 import type { PublicOrder } from "@/types/domain";
 
 const progress = ["pending", "accepted", "preparing", "ready", "completed"] as const;
@@ -22,6 +23,13 @@ export function OrderTracker({ token, initialOrder, phone }: { token: string; in
     const poll = window.setInterval(() => void refresh(), 15_000);
     return () => { window.clearInterval(poll); void supabase.removeChannel(channel); };
   }, [refresh, token]);
+  useEffect(() => {
+    if (isActiveOrderStatus(order.status)) {
+      saveActiveOrder({ token, orderNumber: order.order_number });
+    } else {
+      clearActiveOrder(token);
+    }
+  }, [order.order_number, order.status, token]);
   const current = progress.indexOf(order.status as (typeof progress)[number]);
   const terminal = ["rejected", "cancelled", "expired"].includes(order.status);
   return (

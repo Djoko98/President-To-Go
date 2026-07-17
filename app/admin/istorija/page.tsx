@@ -1,3 +1,26 @@
-import { requireAdmin } from "@/lib/security/admin";import{formatMoney}from"@/lib/money";import{ORDER_STATUS_LABELS}from"@/lib/order-status";import{formatBelgradeTime}from"@/lib/dates";
-export const dynamic="force-dynamic";
-export default async function Page(){const{supabase}=await requireAdmin(["owner","manager"]);const{data}=await supabase.from("orders").select("id,order_number,customer_name,status,total,created_at,completed_at").in("status",["completed","rejected","cancelled","expired"]).order("created_at",{ascending:false}).limit(200);return <main className="p-5 sm:p-8"><h1 className="text-4xl font-bold tracking-[-.05em]">Istorija</h1><div className="mt-7 overflow-x-auto rounded-3xl bg-white"><table className="w-full min-w-[650px] text-left"><thead className="border-b border-neutral-100 text-sm text-neutral-500"><tr><th className="p-4">Broj</th><th className="p-4">Gost</th><th className="p-4">Vreme</th><th className="p-4">Status</th><th className="p-4 text-right">Iznos</th></tr></thead><tbody className="divide-y divide-neutral-100">{(data??[]).map(order=><tr key={order.id}><td className="p-4 font-bold">#{order.order_number}</td><td className="p-4">{order.customer_name}</td><td className="p-4">{formatBelgradeTime(order.created_at)}</td><td className="p-4">{ORDER_STATUS_LABELS[order.status]}</td><td className="p-4 text-right font-bold">{formatMoney(order.total)}</td></tr>)}</tbody></table>{!data?.length?<p className="p-8 text-center text-neutral-500">Još nema završenih porudžbina.</p>:null}</div></main>;}
+import { requireAdmin } from "@/lib/security/admin";
+import { formatMoney } from "@/lib/money";
+import { ORDER_STATUS_LABELS } from "@/lib/order-status";
+import { formatBelgradeTime } from "@/lib/dates";
+
+export const dynamic = "force-dynamic";
+
+export default async function Page() {
+  const { supabase } = await requireAdmin(["owner", "manager"]);
+  const { data } = await supabase.from("orders").select("id,order_number,customer_name,status,total,created_at,completed_at").in("status", ["completed", "rejected", "cancelled", "expired"]).order("created_at", { ascending: false }).limit(200);
+  const orders = data ?? [];
+
+  return <main className="p-5 sm:p-8">
+    <h1 className="text-3xl font-bold tracking-[-.05em] sm:text-4xl">Istorija</h1>
+    <div className="mt-6 grid gap-3 sm:hidden">
+      {orders.map((order) => <article key={order.id} className="rounded-3xl bg-white p-4">
+        <div className="flex items-start justify-between gap-3"><div className="min-w-0"><span className="text-xs font-bold uppercase tracking-[.12em] text-neutral-400">{ORDER_STATUS_LABELS[order.status]}</span><h2 className="mt-1 break-all text-lg font-bold">#{order.order_number}</h2></div><strong className="shrink-0">{formatMoney(order.total)}</strong></div>
+        <div className="mt-4 flex items-center justify-between gap-3 border-t border-neutral-100 pt-3 text-sm"><span className="min-w-0 truncate font-semibold">{order.customer_name}</span><span className="shrink-0 text-neutral-500">{formatBelgradeTime(order.created_at)}</span></div>
+      </article>)}
+    </div>
+    <div className="mt-7 hidden overflow-x-auto rounded-3xl bg-white sm:block">
+      <table className="w-full min-w-[650px] text-left"><thead className="border-b border-neutral-100 text-sm text-neutral-500"><tr><th className="p-4">Broj</th><th className="p-4">Gost</th><th className="p-4">Vreme</th><th className="p-4">Status</th><th className="p-4 text-right">Iznos</th></tr></thead><tbody className="divide-y divide-neutral-100">{orders.map((order) => <tr key={order.id}><td className="p-4 font-bold">#{order.order_number}</td><td className="p-4">{order.customer_name}</td><td className="p-4">{formatBelgradeTime(order.created_at)}</td><td className="p-4">{ORDER_STATUS_LABELS[order.status]}</td><td className="p-4 text-right font-bold">{formatMoney(order.total)}</td></tr>)}</tbody></table>
+    </div>
+    {!orders.length ? <p className="mt-6 rounded-2xl bg-white p-8 text-center text-neutral-500">Još nema završenih porudžbina.</p> : null}
+  </main>;
+}

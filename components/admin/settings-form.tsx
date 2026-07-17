@@ -27,7 +27,7 @@ export function SettingsForm({ settings }: { settings: Settings }) {
   }, [state]);
 
   return (
-    <form action={action} className="mt-7 grid gap-5 rounded-[30px] bg-white p-5 sm:grid-cols-2 sm:p-7">
+    <form action={action} className="mt-6 grid gap-4 rounded-3xl bg-white p-4 sm:mt-7 sm:grid-cols-2 sm:gap-5 sm:rounded-[30px] sm:p-7">
       <div><label htmlFor="defaultPreparation" className="font-bold">Podrazumevana priprema (min)</label><input id="defaultPreparation" name="defaultPreparation" type="number" min="1" max="120" required defaultValue={settings.defaultPreparationMinutes} className={input} /></div>
       <div><label htmlFor="interval" className="font-bold">Interval termina (min)</label><select id="interval" name="interval" defaultValue={settings.slotIntervalMinutes} className={input}>{[5,10,15,20,30,60].map((value) => <option key={value}>{value}</option>)}</select></div>
       <div><label htmlFor="maxOrders" className="font-bold">Maks. porudžbina po terminu</label><input id="maxOrders" name="maxOrders" type="number" min="1" max="100" required defaultValue={settings.maxOrdersPerSlot} className={input} /></div>

@@ -22,3 +22,7 @@ const transitions: Record<OrderStatus, OrderStatus[]> = {
 export function canTransitionOrder(from: OrderStatus, to: OrderStatus): boolean {
   return transitions[from].includes(to);
 }
+
+export function isActiveOrderStatus(status: OrderStatus): boolean {
+  return !["completed", "rejected", "cancelled", "expired"].includes(status);
+}

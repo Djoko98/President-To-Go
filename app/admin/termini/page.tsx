@@ -17,7 +17,7 @@ export default async function Page() {
     <main className="p-5 sm:p-8">
       <h1 className="text-4xl font-bold tracking-[-.05em]">Termini i radno vreme</h1>
       <BusinessHoursForm hours={hours ?? []} />
-      <section className="mt-7 rounded-[30px] bg-white p-5">
+      <section className="mt-6 rounded-3xl bg-white p-4 sm:mt-7 sm:rounded-[30px] sm:p-5">
         <h2 className="text-2xl font-bold">Blokiraj termin</h2>
         <p className="mt-1 text-sm text-neutral-500">Privremeno onemogući poručivanje tokom gužve ili pauze.</p>
         <form action={addBlockedSlot} className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -30,7 +30,7 @@ export default async function Page() {
       <section className="mt-7">
         <h2 className="text-2xl font-bold">Aktivne blokade</h2>
         <div className="mt-4 grid gap-3">
-          {(blocked ?? []).map((slot) => <div key={slot.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white p-4"><div><p className="font-bold">{new Intl.DateTimeFormat("sr-Latn-RS", { timeZone: "Europe/Belgrade", day: "numeric", month: "long" }).format(new Date(slot.starts_at))} · {formatBelgradeTime(slot.starts_at)}–{formatBelgradeTime(slot.ends_at)}</p><p className="text-sm text-neutral-500">{slot.reason}</p></div><form action={removeBlockedSlot}><input type="hidden" name="id" value={slot.id} /><button className="min-h-11 rounded-full border border-red-200 px-4 font-bold text-red-700">Ukloni blokadu</button></form></div>)}
+          {(blocked ?? []).map((slot) => <div key={slot.id} className="flex flex-col gap-3 rounded-2xl bg-white p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-bold">{new Intl.DateTimeFormat("sr-Latn-RS", { timeZone: "Europe/Belgrade", day: "numeric", month: "long" }).format(new Date(slot.starts_at))} · {formatBelgradeTime(slot.starts_at)}–{formatBelgradeTime(slot.ends_at)}</p><p className="text-sm text-neutral-500">{slot.reason}</p></div><form action={removeBlockedSlot} className="w-full sm:w-auto"><input type="hidden" name="id" value={slot.id} /><button className="min-h-11 w-full rounded-full border border-red-200 px-4 font-bold text-red-700 sm:w-auto">Ukloni blokadu</button></form></div>)}
           {!blocked?.length ? <p className="rounded-2xl bg-white p-5 text-neutral-500">Nema aktivnih blokada.</p> : null}
         </div>
       </section>
