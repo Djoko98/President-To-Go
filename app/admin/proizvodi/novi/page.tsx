@@ -1,0 +1,2 @@
+import { ProductForm } from "@/components/admin/product-form";import { requireAdmin } from "@/lib/security/admin";import type{Category}from"@/types/domain";
+export default async function Page(){const{supabase}=await requireAdmin(["owner","manager"]);const{data}=await supabase.from("categories").select("id,name,slug,image_url,position,is_active").order("position");return <main className="p-5 sm:p-8"><h1 className="text-4xl font-bold tracking-[-.05em]">Novi proizvod</h1><ProductForm categories={(data??[]) as Category[]}/></main>;}

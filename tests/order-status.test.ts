@@ -1,0 +1,2 @@
+import{describe,expect,it}from"vitest";import{canTransitionOrder}from"@/lib/order-status";
+describe("prelazi statusa",()=>{it("dozvoljava standardni tok",()=>{expect(canTransitionOrder("pending","accepted")).toBe(true);expect(canTransitionOrder("accepted","preparing")).toBe(true);expect(canTransitionOrder("preparing","ready")).toBe(true);expect(canTransitionOrder("ready","completed")).toBe(true);});it("štiti završene i nedozvoljene statuse",()=>{expect(canTransitionOrder("completed","pending")).toBe(false);expect(canTransitionOrder("pending","ready")).toBe(false);});});

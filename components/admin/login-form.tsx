@@ -1,0 +1,12 @@
+"use client";
+import { useState } from "react";
+import { LoaderCircle } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { createClient } from "@/lib/supabase/browser";
+
+export function LoginForm() {
+  const router = useRouter(); const search = useSearchParams(); const [loading, setLoading] = useState(false); const [message, setMessage] = useState("");
+  async function passwordLogin(event: React.FormEvent<HTMLFormElement>) { event.preventDefault(); setLoading(true); setMessage(""); const form = new FormData(event.currentTarget); const supabase = createClient(); const { error } = await supabase.auth.signInWithPassword({ email: String(form.get("email")), password: String(form.get("password")) }); if (error) { setMessage("Email ili lozinka nisu ispravni."); setLoading(false); return; } router.replace(search.get("next") || "/admin"); router.refresh(); }
+  async function magicLink(event: React.MouseEvent<HTMLButtonElement>) { const form = event.currentTarget.form; if (!form) return; const email = String(new FormData(form).get("email")); if (!email) { setMessage("Unesi email adresu."); return; } setLoading(true); const { error } = await createClient().auth.signInWithOtp({ email, options: { emailRedirectTo: `${location.origin}/admin` } }); setMessage(error ? "Link nije poslat." : "Magic link je poslat na email."); setLoading(false); }
+  return <form onSubmit={passwordLogin} className="mt-8 space-y-4"><div><label htmlFor="email" className="font-bold">Email</label><input id="email" name="email" type="email" autoComplete="email" required className="mt-2 min-h-12 w-full rounded-2xl border border-neutral-200 px-4" /></div><div><label htmlFor="password" className="font-bold">Lozinka</label><input id="password" name="password" type="password" autoComplete="current-password" required className="mt-2 min-h-12 w-full rounded-2xl border border-neutral-200 px-4" /></div>{message ? <p role="status" className="rounded-xl bg-neutral-100 p-3 text-sm font-semibold">{message}</p> : null}<button disabled={loading} className="flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-black font-bold text-white">{loading ? <LoaderCircle className="animate-spin" /> : null}Prijavi se</button><button type="button" onClick={magicLink} disabled={loading} className="min-h-12 w-full rounded-full border border-neutral-300 font-bold">Pošalji magic link</button></form>;
+}

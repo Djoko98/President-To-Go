@@ -1,0 +1,2 @@
+import{describe,expect,it}from"vitest";import{isValidSerbianPhone,normalizeSerbianPhone}from"@/lib/phone";
+describe("srpski telefon",()=>{it.each([["064 123 4567","+381641234567"],["+381 (64) 123-4567","+381641234567"],["00381 64 123 4567","+381641234567"]])("normalizuje %s",(input,expected)=>expect(normalizeSerbianPhone(input)).toBe(expected));it("odbija prekratak broj",()=>expect(isValidSerbianPhone("06412")).toBe(false));});

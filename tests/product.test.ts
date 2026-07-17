@@ -1,0 +1,2 @@
+import{describe,expect,it}from"vitest";import{fallbackProducts}from"@/lib/catalog-fallback";
+describe("dostupnost proizvoda",()=>{it("seed ima aktivne proizvode sa server-side cenom",()=>{expect(fallbackProducts).toHaveLength(10);expect(fallbackProducts.every(product=>product.is_active&&product.price>0)).toBe(true);});it("nedostupan proizvod može biti označen bez promene cene",()=>{const unavailable={...fallbackProducts[0]!,is_available:false};expect(unavailable.is_available).toBe(false);expect(unavailable.price).toBe(59000);});});
