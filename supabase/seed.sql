@@ -1,5 +1,5 @@
-insert into public.app_settings(ordering_enabled, default_preparation_minutes, slot_interval_minutes, max_orders_per_slot, max_advance_days, restaurant_phone, restaurant_address)
-values (true, 20, 15, 8, 7, '+381000000000', 'President, Srbija')
+insert into public.app_settings(ordering_enabled, default_preparation_minutes, slot_interval_minutes, max_orders_per_slot, max_advance_minutes, restaurant_phone, restaurant_address)
+values (true, 20, 15, 8, 120, '+381000000000', 'President, Srbija')
 on conflict ((true)) do nothing;
 
 insert into public.business_hours(day_of_week, opens_at, closes_at, is_closed) values
@@ -34,4 +34,3 @@ insert into public.products(category_id, name, slug, description, ingredients, p
 select c.id, d.name, d.slug, d.description, d.ingredients, d.price, '/images/products/lubenito.png', d.accent_color, d.alcohol, d.prep, d.max_qty, d.position
 from data d join public.categories c on c.slug = d.category_slug
 on conflict (slug) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, ingredients = excluded.ingredients, price = excluded.price, image_url = excluded.image_url, accent_color = excluded.accent_color, contains_alcohol = excluded.contains_alcohol, preparation_minutes = excluded.preparation_minutes, max_quantity_per_order = excluded.max_quantity_per_order, position = excluded.position;
-

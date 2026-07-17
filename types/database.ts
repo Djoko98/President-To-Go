@@ -19,7 +19,7 @@ export interface Database {
         id: string; category_id: string; name: string; slug: string; description: string; ingredients: string; price: number; image_url: string | null; accent_color: string; contains_alcohol: boolean; preparation_minutes: number; max_quantity_per_order: number; position: number; is_available: boolean; is_active: boolean; created_at: string; updated_at: string;
       }>;
       app_settings: GenericTable<{
-        id: string; ordering_enabled: boolean; default_preparation_minutes: number; slot_interval_minutes: number; max_orders_per_slot: number; max_advance_days: number; restaurant_phone: string; restaurant_address: string; timezone: string; updated_at: string;
+        id: string; ordering_enabled: boolean; default_preparation_minutes: number; slot_interval_minutes: number; max_orders_per_slot: number; max_advance_minutes: number; restaurant_phone: string; restaurant_address: string; timezone: string; updated_at: string;
       }>;
       profiles: GenericTable<{ id: string; full_name: string; role: AdminRole; created_at: string; updated_at: string }>;
       orders: GenericTable<{

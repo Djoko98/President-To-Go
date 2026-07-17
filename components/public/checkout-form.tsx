@@ -11,7 +11,7 @@ import { useCartStore } from "@/features/cart/store";
 import { useCartHydration } from "@/features/cart/use-cart-hydration";
 import { formatBelgradeTime } from "@/lib/dates";
 import { calculateCartTotal, formatMoney } from "@/lib/money";
-import { checkoutSchema, type CheckoutInput } from "@/lib/validation/checkout";
+import { checkoutFormSchema, type CheckoutFormInput } from "@/lib/validation/checkout";
 
 interface Slot { starts_at: string; is_available: boolean }
 
@@ -24,9 +24,9 @@ export function CheckoutForm() {
   const [slotsLoading, setSlotsLoading] = useState(true);
   const containsAlcohol = items.some((item) => item.product.contains_alcohol);
   const total = calculateCartTotal(items.map((item) => ({ price: item.product.price, quantity: item.quantity })));
-  const { register, control, handleSubmit, formState: { errors, isSubmitting }, setError } = useForm<CheckoutInput>({
-    resolver: zodResolver(checkoutSchema),
-    defaultValues: { customerName: "", customerPhone: "+381 ", requestedPickupAt: "", customerNote: "", adultConfirmed: false, items: [], idempotencyKey: crypto.randomUUID() },
+  const { register, control, handleSubmit, formState: { errors, isSubmitting }, setError } = useForm<CheckoutFormInput>({
+    resolver: zodResolver(checkoutFormSchema),
+    defaultValues: { customerName: "", customerPhone: "+381 ", requestedPickupAt: "", customerNote: "", adultConfirmed: false, idempotencyKey: crypto.randomUUID() },
   });
 
   useEffect(() => {
@@ -46,15 +46,22 @@ export function CheckoutForm() {
   if (!items.length) return <main className="mx-auto grid min-h-[55dvh] max-w-lg place-items-center px-6 text-center"><div><h1 className="text-3xl font-bold">Korpa je prazna</h1><Link href="/" className="mt-6 inline-flex rounded-full bg-black px-6 py-3 font-bold text-white">Izaberi napitak</Link></div></main>;
 
   const submit = handleSubmit(async (values) => {
-    const response = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...values, items: items.map((item) => ({ productId: item.product.id, quantity: item.quantity })) }) });
-    const payload = await response.json() as { public_token?: string; error?: string; fields?: Record<string, string[]> };
-    if (!response.ok || !payload.public_token) {
-      setError("root", { message: payload.error ?? "Porudžbina nije poslata." });
-      toast.error(payload.error ?? "Porudžbina nije poslata.");
-      return;
+    try {
+      const response = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...values, items: items.map((item) => ({ productId: item.product.id, quantity: item.quantity })) }) });
+      const payload = await response.json().catch(() => ({})) as { public_token?: string; error?: string; fields?: Record<string, string[]> };
+      if (!response.ok || !payload.public_token) {
+        const message = payload.error ?? "Porudžbina nije poslata. Pokušaj ponovo.";
+        setError("root", { message });
+        toast.error(message);
+        return;
+      }
+      clear();
+      router.replace(`/porudzbina/${payload.public_token}`);
+    } catch {
+      const message = "Nema veze sa serverom. Proveri internet i pokušaj ponovo.";
+      setError("root", { message });
+      toast.error(message);
     }
-    clear();
-    router.replace(`/porudzbina/${payload.public_token}`);
   }, () => { document.querySelector<HTMLElement>("[aria-invalid='true']")?.focus(); });
 
   const fieldClass = "mt-2 min-h-12 w-full rounded-2xl border border-neutral-200 bg-white px-4 text-base outline-none transition focus:border-neutral-800";
