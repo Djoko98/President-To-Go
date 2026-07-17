@@ -73,8 +73,8 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
         <button type="button" aria-label="Prethodni proizvod" onClick={() => go(productIndex - 1)} className="touch-target absolute left-5 top-[36%] z-20 hidden place-items-center rounded-full bg-white/80 shadow sm:grid"><ChevronLeft /></button>
         <button type="button" aria-label="Sledeći proizvod" onClick={() => go(productIndex + 1)} className="touch-target absolute right-5 top-[36%] z-20 hidden place-items-center rounded-full bg-white/80 shadow sm:grid"><ChevronRight /></button>
         <div className="catalog-product-image relative z-10 cursor-grab touch-pan-y select-none active:cursor-grabbing" onPointerDown={(event) => { pointerStart.current = { x: event.clientX, y: event.clientY }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerUp={onPointerUp} onPointerCancel={() => { pointerStart.current = null; }}>
-          <AnimatePresence mode="popLayout" initial={false} custom={direction}>
-            <motion.div key={product.id} custom={direction} initial={reduceMotion ? false : { opacity: 0, x: direction * 42 }} animate={{ opacity: product.is_available ? 1 : .46, x: 0 }} exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: direction * -42 }} transition={{ duration: .24, ease: "easeOut" }} className="absolute inset-0 can-shadow">
+          <AnimatePresence initial={false} custom={direction}>
+            <motion.div key={product.id} custom={direction} initial={reduceMotion ? false : { opacity: 0, x: direction * 42 }} animate={{ opacity: product.is_available ? 1 : .46, x: 0 }} exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: direction * -42 }} transition={{ duration: .24, ease: "easeOut" }} className="absolute inset-0">
               <ProductImage src={product.image_url} alt={product.name} />
             </motion.div>
           </AnimatePresence>

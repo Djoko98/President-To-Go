@@ -8,9 +8,9 @@ export function CartButton() {
   const hydrated = useCartHydration();
   const count = useCartStore((state) => state.items.reduce((sum, item) => sum + item.quantity, 0));
   return (
-    <Link href="/korpa" aria-label={`Korpa, ${hydrated ? count : 0} artikala`} className="relative grid size-14 place-items-center rounded-full bg-white text-black shadow-[0_8px_30px_rgba(0,0,0,.08)] transition hover:-translate-y-0.5">
-      <ShoppingCart aria-hidden size={25} strokeWidth={1.9} />
-      {hydrated && count > 0 ? <span className="absolute -right-1 -top-1 grid size-6 place-items-center rounded-full bg-black text-xs font-bold text-white">{count}</span> : null}
+    <Link href="/korpa" aria-label={`Korpa, ${hydrated ? count : 0} artikala`} className="relative grid size-12 shrink-0 place-items-center rounded-full bg-black text-white transition-colors hover:bg-neutral-800">
+      <ShoppingCart aria-hidden size={22} strokeWidth={2} />
+      {hydrated && count > 0 ? <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full border-2 border-black bg-white text-[10px] font-extrabold leading-none text-black">{count}</span> : null}
     </Link>
   );
 }

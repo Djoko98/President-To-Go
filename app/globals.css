@@ -35,15 +35,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .page-shell { width: min(100%, 1180px); margin-inline: auto; }
 .touch-target { min-width: 44px; min-height: 44px; }
 .text-balance { text-wrap: balance; }
-.can-shadow { filter: drop-shadow(0 24px 18px rgba(31, 31, 29, .2)); }
 .admin-grid { display: grid; grid-template-columns: 250px minmax(0, 1fr); min-height: 100dvh; }
 
 .public-home-header { height: clamp(70px, 11.5dvh, 112px); }
 .home-catalog { height: calc(100dvh - clamp(70px, 11.5dvh, 112px)); padding-bottom: clamp(76px, 10dvh, 96px); }
-.catalog-categories { height: clamp(92px, 16dvh, 148px); }
-.catalog-category-image { width: clamp(64px, 11dvh, 94px); height: clamp(64px, 11dvh, 94px); }
-.catalog-product-stage { height: calc(100% - clamp(92px, 16dvh, 148px)); min-height: 0; }
-.catalog-product-image { height: clamp(180px, 37dvh, 340px); width: clamp(140px, 28.5dvh, 262px); flex: 0 0 auto; }
+.catalog-categories { height: clamp(112px, 19dvh, 158px); }
+.catalog-category-image { width: clamp(56px, 9.5dvh, 78px); height: clamp(56px, 9.5dvh, 78px); }
+.catalog-category-emoji { font-size: clamp(1.75rem, 4.8dvh, 2.55rem); line-height: 1; }
+.catalog-product-stage { height: calc(100% - clamp(112px, 19dvh, 158px)); min-height: 0; padding-top: clamp(5px, 1dvh, 10px); }
+.catalog-product-image { height: clamp(160px, 32dvh, 290px); width: clamp(125px, 24.7dvh, 224px); flex: 0 0 auto; }
 .catalog-product-glow { height: clamp(240px, 45dvh, 410px); width: clamp(240px, 45dvh, 410px); }
 
 @media (max-height: 700px) {
