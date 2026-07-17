@@ -8,6 +8,11 @@
   --surface: #ffffff;
   --line: #dededb;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --header-h: clamp(70px, 11.5dvh, 112px);
+  --cat-h: clamp(100px, 15.5dvh, 128px);
+  --can-h: clamp(160px, 32dvh, 290px);
+  --can-w: clamp(125px, 24.7dvh, 224px);
+  --stage-top: clamp(6px, 1.2dvh, 12px);
 }
 
 * { box-sizing: border-box; }
@@ -39,21 +44,35 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .admin-sidebar { position: sticky; top: 0; height: 100dvh; overflow-y: auto; }
 .admin-content { min-height: 100dvh; }
 
-.public-home-header { height: clamp(70px, 11.5dvh, 112px); }
-.home-catalog { height: calc(100dvh - clamp(70px, 11.5dvh, 112px)); padding-bottom: clamp(76px, 10dvh, 96px); }
-.catalog-categories { height: clamp(96px, 15.5dvh, 126px); }
-.catalog-category-arc path { stroke: rgba(21, 21, 21, .12); stroke-width: 1.25; stroke-linecap: round; }
-.catalog-category-center { margin-top: clamp(2px, .8dvh, 7px); }
-.catalog-category-side { margin-top: clamp(22px, 3.4dvh, 28px); }
-.catalog-category-image { width: clamp(47px, 7.5dvh, 60px); height: clamp(47px, 7.5dvh, 60px); }
-.catalog-category-icon { width: clamp(21px, 3.4dvh, 27px); height: clamp(21px, 3.4dvh, 27px); }
-.catalog-product-stage { height: calc(100% - clamp(96px, 15.5dvh, 126px)); min-height: 0; padding-top: clamp(5px, 1dvh, 10px); }
-.catalog-product-image { height: clamp(160px, 32dvh, 290px); width: clamp(125px, 24.7dvh, 224px); flex: 0 0 auto; }
+.public-home-header { height: var(--header-h); }
+.home-catalog { height: calc(100dvh - var(--header-h)); padding-bottom: calc(clamp(84px, 10.5dvh, 100px) + var(--safe-bottom)); }
+.catalog-categories { height: var(--cat-h); padding-bottom: clamp(10px, 1.6dvh, 16px); }
+.catalog-category-image { width: clamp(44px, 7dvh, 56px); height: clamp(44px, 7dvh, 56px); }
+.catalog-category-icon { width: clamp(20px, 3.2dvh, 25px); height: clamp(20px, 3.2dvh, 25px); }
+.catalog-product-stage { height: calc(100% - var(--cat-h)); min-height: 0; padding-top: var(--stage-top); }
+.catalog-product-image { height: var(--can-h); width: var(--can-w); flex: 0 0 auto; }
 .catalog-product-glow { height: clamp(260px, 48dvh, 440px); width: clamp(260px, 48dvh, 440px); }
+.catalog-ring { position: absolute; inset: 11%; opacity: .38; }
+.catalog-ghost-name { top: calc(var(--stage-top) + var(--can-h) * .08); }
+.catalog-ghost-name span { font-size: clamp(3rem, 16vw, 7.5rem); font-weight: 800; line-height: 1; letter-spacing: -.05em; text-transform: uppercase; white-space: nowrap; }
+.catalog-peek { position: absolute; z-index: 4; top: calc(var(--stage-top) + var(--can-h) * .22); height: calc(var(--can-h) * .58); width: calc(var(--can-w) * .58); opacity: .32; filter: saturate(.7) blur(1.1px); transition: opacity .3s ease, transform .3s ease, filter .3s ease; }
+.catalog-peek:hover, .catalog-peek:focus-visible { opacity: .6; filter: saturate(.95) blur(.3px); }
+.catalog-peek-left { left: min(calc(7vw - 40px), 110px); transform: rotate(-7deg); }
+.catalog-peek-left:hover { transform: rotate(-7deg) scale(1.06); }
+.catalog-peek-right { right: min(calc(7vw - 40px), 110px); transform: rotate(7deg); }
+.catalog-peek-right:hover { transform: rotate(7deg) scale(1.06); }
+.catalog-can-shadow { position: absolute; bottom: clamp(-18px, -1.6dvh, -9px); left: 12%; right: 12%; height: 20px; border-radius: 9999px; background: radial-gradient(ellipse at center, rgba(15,15,15,.2), transparent 68%); filter: blur(6px); }
+.catalog-chips { justify-content: safe center; scrollbar-width: none; }
+.catalog-chips::-webkit-scrollbar { display: none; }
 
 @media (max-height: 700px) {
   .public-home-header span:last-child { margin-top: .25rem; }
   .catalog-product-stage { padding-inline: 1rem; }
+}
+@media (max-height: 640px) {
+  :root { --cat-h: 94px; --can-h: clamp(140px, 27dvh, 200px); --can-w: clamp(109px, 20.8dvh, 154px); --stage-top: 4px; }
+  .catalog-product-stage h1 { font-size: clamp(1.25rem, 5vw, 1.55rem); }
+  .catalog-product-glow { height: 42dvh; width: 42dvh; }
 }
 
 @media (max-width: 820px) {

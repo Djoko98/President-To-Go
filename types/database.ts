@@ -30,6 +30,7 @@ export interface Database {
       blocked_slots: GenericTable<{ id: string; starts_at: string; ends_at: string; reason: string; created_at: string }>;
       order_status_events: GenericTable<{ id: string; order_id: string; previous_status: OrderStatus | null; new_status: OrderStatus; changed_by: string | null; note: string | null; created_at: string }>;
       notifications: GenericTable<{ id: string; order_id: string; channel: "in_app" | "browser" | "sms"; event_type: string; recipient: string; status: "queued" | "sent" | "failed" | "skipped"; provider_message_id: string | null; error_message: string | null; created_at: string; sent_at: string | null }>;
+      push_subscriptions: GenericTable<{ id: string; user_id: string; endpoint: string; p256dh: string; auth: string; user_agent: string | null; created_at: string; updated_at: string }>;
     };
     Views: Record<string, never>;
     Functions: {

@@ -1,4 +1,5 @@
 import { saveCategory } from "@/features/admin/actions";
+import { SubmitButton } from "@/components/admin/submit-button";
 import { requireAdmin } from "@/lib/security/admin";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +18,7 @@ export default async function Page() {
         <div className="flex items-center gap-3 sm:block"><label className="text-xs font-bold text-neutral-400">Red</label><div className="grid size-11 place-items-center rounded-xl bg-neutral-100 font-bold sm:mt-2">{category.position + 1}</div></div>
         <div><label className="text-sm font-bold">Naziv</label><input name="name" required defaultValue={category.name} className={`mt-2 ${input}`} /></div>
         <div><label className="text-sm font-bold">Slug</label><input name="slug" required defaultValue={category.slug} className={`mt-2 ${input}`} /></div>
-        <div className="grid grid-cols-2 items-center gap-3 sm:flex"><label className="flex min-h-11 items-center gap-2 font-bold"><input name="isActive" type="checkbox" defaultChecked={category.is_active} className="size-5 accent-black" />Aktivna</label><button className="min-h-11 rounded-full bg-black px-5 font-bold text-white">Sačuvaj</button></div>
+        <div className="grid grid-cols-2 items-center gap-3 sm:flex"><label className="flex min-h-11 items-center gap-2 font-bold"><input name="isActive" type="checkbox" defaultChecked={category.is_active} className="size-5 accent-black" />Aktivna</label><SubmitButton spinnerSize={16} pendingText="Čuvamo…" className="min-h-11 rounded-full bg-black px-5 font-bold text-white">Sačuvaj</SubmitButton></div>
       </form>)}
     </div>
   </main>;

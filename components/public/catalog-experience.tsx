@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Clock3 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { CategorySelector } from "@/components/public/category-selector";
@@ -11,6 +11,12 @@ import { ProductImage } from "@/components/shared/product-image";
 import { useCartStore } from "@/features/cart/store";
 import { formatMoney } from "@/lib/money";
 import type { CatalogData } from "@/types/domain";
+
+const canVariants = {
+  enter: (direction: number) => ({ opacity: 0, x: direction * 92, scale: 0.82, rotate: direction * 8 }),
+  center: { opacity: 1, x: 0, scale: 1, rotate: 0 },
+  exit: (direction: number) => ({ opacity: 0, x: direction * -92, scale: 0.85, rotate: direction * -6 }),
+};
 
 export function CatalogExperience({ catalog, initialCategory }: { catalog: CatalogData; initialCategory?: string }) {
   const router = useRouter();
@@ -25,6 +31,9 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
 
   const products = useMemo(() => catalog.products.filter((item) => item.category_id === activeCategoryId), [catalog.products, activeCategoryId]);
   const product = products[productIndex] ?? products[0];
+  const prevProduct = products.length > 1 ? products[(productIndex - 1 + products.length) % products.length] : undefined;
+  const nextProduct = products.length > 1 ? products[(productIndex + 1) % products.length] : undefined;
+  const ingredients = useMemo(() => (product?.ingredients ?? "").split(",").map((item) => item.trim()).filter(Boolean), [product?.ingredients]);
 
   const go = useCallback((next: number) => {
     if (!products.length) return;
@@ -42,7 +51,7 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
     return () => window.removeEventListener("keydown", onKey);
   }, [go, productIndex]);
 
-  if (!category || !product) {
+  if (!category) {
     return <div className="mx-auto mt-20 max-w-md px-6 text-center"><h1 className="text-2xl font-bold">Katalog je trenutno prazan</h1><p className="mt-2 text-neutral-500">Pokušaj ponovo malo kasnije.</p></div>;
   }
 
@@ -59,7 +68,7 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
     go(productIndex + (dx < 0 ? 1 : -1));
   };
   const addToCart = () => {
-    if (!product.is_available) return;
+    if (!product || !product.is_available) return;
     add(product, quantity);
     toast.success(`${quantity} × ${product.name} je dodato u korpu.`);
   };
@@ -68,30 +77,82 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
     <main className="home-catalog relative overflow-hidden">
       {!catalog.orderingEnabled ? <div role="status" className="absolute inset-x-4 top-1 z-30 mx-auto max-w-xl rounded-2xl bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-950 shadow-sm">Online poručivanje je trenutno pauzirano.</div> : null}
       <CategorySelector categories={catalog.categories} activeId={activeCategoryId} onChange={changeCategory} />
-      <section aria-label={`${activeCategory.name}: ${product.name}`} className="catalog-product-stage relative mx-auto flex w-full max-w-[820px] flex-col items-center justify-start overflow-hidden px-5">
-        <div aria-hidden className="catalog-product-glow pointer-events-none absolute left-1/2 top-[5%] -translate-x-1/2 rounded-full transition-all duration-500" style={{ background: `radial-gradient(circle at center, ${product.accent_color} 0%, ${product.accent_color} 24%, transparent 70%)`, opacity: .72 }} />
-        <button type="button" aria-label="Prethodni proizvod" onClick={() => go(productIndex - 1)} className="touch-target absolute left-5 top-[36%] z-20 hidden place-items-center rounded-full bg-white/80 shadow sm:grid"><ChevronLeft /></button>
-        <button type="button" aria-label="Sledeći proizvod" onClick={() => go(productIndex + 1)} className="touch-target absolute right-5 top-[36%] z-20 hidden place-items-center rounded-full bg-white/80 shadow sm:grid"><ChevronRight /></button>
-        <div className="catalog-product-image relative z-10 cursor-grab touch-pan-y select-none active:cursor-grabbing" onPointerDown={(event) => { pointerStart.current = { x: event.clientX, y: event.clientY }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerUp={onPointerUp} onPointerCancel={() => { pointerStart.current = null; }}>
-          <AnimatePresence initial={false} custom={direction}>
-            <motion.div key={product.id} custom={direction} initial={reduceMotion ? false : { opacity: 0, x: direction * 42 }} animate={{ opacity: product.is_available ? 1 : .46, x: 0 }} exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: direction * -42 }} transition={{ duration: .24, ease: "easeOut" }} className="absolute inset-0">
-              <ProductImage src={product.image_url} alt={product.name} />
+      {!product ? (
+        <section className="catalog-product-stage relative mx-auto grid w-full max-w-[820px] place-items-center px-5">
+          <div className="text-center">
+            <h1 className="text-xl font-bold sm:text-2xl">Nema proizvoda u ovoj kategoriji</h1>
+            <p className="mt-2 text-sm text-neutral-500">Izaberi drugu kategoriju iznad.</p>
+          </div>
+        </section>
+      ) : (
+        <section aria-label={`${activeCategory.name}: ${product.name}`} className="catalog-product-stage relative mx-auto flex w-full max-w-[820px] flex-col items-center justify-start px-5">
+          <div aria-hidden className="pointer-events-none absolute left-1/2 top-[5%] z-0 -translate-x-1/2">
+            <div className="catalog-product-glow rounded-full transition-all duration-700" style={{ background: `radial-gradient(circle at center, ${product.accent_color} 0%, ${product.accent_color} 22%, transparent 70%)`, opacity: 0.68 }} />
+            <motion.div className="catalog-ring rounded-full border border-dashed" style={{ borderColor: product.accent_color }} animate={reduceMotion ? undefined : { rotate: 360 }} transition={{ repeat: Infinity, duration: 70, ease: "linear" }} />
+          </div>
+          <div aria-hidden className="catalog-ghost-name pointer-events-none absolute inset-x-0 z-0 flex justify-center">
+            <AnimatePresence initial={false} custom={direction} mode="popLayout">
+              <motion.span key={product.id} custom={direction} initial={reduceMotion ? false : { opacity: 0, x: direction * 130 }} animate={{ opacity: 0.17, x: 0 }} exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: direction * -130 }} transition={{ duration: 0.5, ease: "easeOut" }} style={{ color: product.accent_color }}>
+                {product.name}
+              </motion.span>
+            </AnimatePresence>
+          </div>
+          {prevProduct ? (
+            <button type="button" onClick={() => go(productIndex - 1)} aria-label={`Prethodni proizvod: ${prevProduct.name}`} className="catalog-peek catalog-peek-left">
+              <motion.div key={prevProduct.id} initial={reduceMotion ? false : { opacity: 0, scale: 0.88 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3 }} className="relative h-full w-full">
+                <ProductImage src={prevProduct.image_url} alt="" />
+              </motion.div>
+            </button>
+          ) : null}
+          {nextProduct ? (
+            <button type="button" onClick={() => go(productIndex + 1)} aria-label={`Sledeći proizvod: ${nextProduct.name}`} className="catalog-peek catalog-peek-right">
+              <motion.div key={nextProduct.id} initial={reduceMotion ? false : { opacity: 0, scale: 0.88 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3 }} className="relative h-full w-full">
+                <ProductImage src={nextProduct.image_url} alt="" />
+              </motion.div>
+            </button>
+          ) : null}
+          <div className="catalog-product-image relative z-10 cursor-grab touch-pan-y select-none active:cursor-grabbing" onPointerDown={(event) => { pointerStart.current = { x: event.clientX, y: event.clientY }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerUp={onPointerUp} onPointerCancel={() => { pointerStart.current = null; }}>
+            <AnimatePresence initial={false} custom={direction}>
+              <motion.div key={product.id} custom={direction} variants={canVariants} initial={reduceMotion ? false : "enter"} animate="center" exit={reduceMotion ? { opacity: 0 } : "exit"} transition={reduceMotion ? { duration: 0.15 } : { type: "spring", stiffness: 320, damping: 30, mass: 0.92 }} className="absolute inset-0">
+                <div aria-hidden className="catalog-can-shadow" />
+                <motion.div animate={reduceMotion || !product.is_available ? undefined : { y: [0, -7, 0] }} transition={{ repeat: Infinity, duration: 4.6, ease: "easeInOut" }} className={`absolute inset-0 ${product.is_available ? "" : "opacity-45 grayscale"}`}>
+                  <ProductImage src={product.image_url} alt={product.name} />
+                </motion.div>
+                {!product.is_available ? <span className="absolute left-1/2 top-1/2 z-20 w-max -translate-x-1/2 -translate-y-1/2 -rotate-6 rounded-full bg-neutral-950/90 px-4 py-1.5 text-sm font-extrabold uppercase tracking-wide text-white shadow-lg">Rasprodato</span> : null}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+          <div className="relative z-10 mt-auto flex w-full flex-col items-center">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div key={`${product.id}-copy`} initial={reduceMotion ? false : { opacity: 0, y: 9 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2, ease: "easeOut" }} className="w-full max-w-xl text-center">
+              <h1 className="text-[clamp(1.55rem,6vw,2.5rem)] font-bold leading-tight tracking-[-.045em]">{product.name}</h1>
+              {ingredients.length ? (
+                <div className="catalog-chips mx-auto mt-1.5 flex max-w-full items-center gap-1.5 overflow-x-auto whitespace-nowrap px-2">
+                  {ingredients.map((item) => <span key={item} className="shrink-0 rounded-full border border-neutral-200/90 bg-white/80 px-2.5 py-1 text-[11px] font-semibold leading-none text-neutral-600 shadow-sm shadow-neutral-900/5 sm:text-xs">{item}</span>)}
+                </div>
+              ) : null}
+              <div className="mt-2 flex items-center justify-center gap-2.5">
+                <p className="text-xl font-bold tracking-[-.03em] sm:text-2xl">{formatMoney(product.price)}</p>
+                <span aria-hidden className="size-1 rounded-full bg-neutral-300" />
+                <p className="flex items-center gap-1 text-xs font-semibold text-neutral-500 sm:text-sm"><Clock3 aria-hidden size={14} />~{product.preparation_minutes} min</p>
+                {product.contains_alcohol ? <span className="rounded-full bg-neutral-950 px-2 py-0.5 text-[10px] font-extrabold leading-none text-white">18+</span> : null}
+              </div>
             </motion.div>
           </AnimatePresence>
-        </div>
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div key={`${product.id}-copy`} initial={reduceMotion ? false : { opacity: 0, y: 7 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} transition={{ duration: .18 }} className="relative z-10 -mt-1 max-w-xl text-center">
-            <h1 className="text-[clamp(1.55rem,6vw,2.5rem)] font-bold leading-tight tracking-[-.045em]">{product.name}</h1>
-            <p className="mx-auto mt-1 max-w-lg text-xs font-medium leading-relaxed text-neutral-500 sm:text-sm">{product.ingredients}</p>
-            <p className="mt-1.5 text-xl font-bold tracking-[-.03em] sm:text-2xl">{formatMoney(product.price)}</p>
-            {!product.is_available ? <p className="mt-2 font-bold text-red-700">Trenutno je rasprodato</p> : null}
-          </motion.div>
-        </AnimatePresence>
-        <div className="relative z-10 mt-2 flex items-center gap-3" aria-label={`Proizvod ${productIndex + 1} od ${products.length}`}>
-          {products.map((item, index) => <button key={item.id} type="button" onClick={() => go(index)} aria-label={`Prikaži ${item.name}`} aria-current={index === productIndex} className={`touch-target relative grid place-items-center after:block after:size-2.5 after:rounded-full after:transition ${index === productIndex ? "after:bg-neutral-900" : "after:bg-neutral-300"}`} />)}
-        </div>
-      </section>
-      <FloatingAddBar quantity={quantity} max={product.max_quantity_per_order} disabled={!catalog.orderingEnabled || !product.is_available} onChange={setQuantity} onAdd={addToCart} />
+          <div className="mt-1 flex items-center" aria-label={`Proizvod ${productIndex + 1} od ${products.length}`}>
+            {products.map((item, index) => {
+              const active = index === productIndex;
+              return (
+                <button key={item.id} type="button" onClick={() => go(index)} aria-label={`Prikaži ${item.name}`} aria-current={active} className="touch-target group grid place-items-center">
+                  <span className={`block h-2 rounded-full transition-all duration-300 ${active ? "w-6 bg-neutral-900" : "w-2 bg-neutral-300 group-hover:bg-neutral-400"}`} />
+                </button>
+              );
+            })}
+          </div>
+          </div>
+        </section>
+      )}
+      {product ? <FloatingAddBar quantity={quantity} max={product.max_quantity_per_order} disabled={!catalog.orderingEnabled || !product.is_available} onChange={setQuantity} onAdd={addToCart} /> : null}
     </main>
   );
 }

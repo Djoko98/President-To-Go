@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, ShoppingCart, Trash2 } from "lucide-react";
 import { QuantityControl } from "@/components/public/quantity-control";
 import { ProductImage } from "@/components/shared/product-image";
 import { useCartStore } from "@/features/cart/store";
@@ -14,7 +14,7 @@ export function CartPage() {
   const remove = useCartStore((state) => state.remove);
   const total = calculateCartTotal(items.map((item) => ({ price: item.product.price, quantity: item.quantity })));
   if (!hydrated) return <div className="mx-auto mt-16 max-w-2xl animate-pulse px-5"><div className="h-32 rounded-3xl bg-neutral-200" /><div className="mt-4 h-32 rounded-3xl bg-neutral-200" /></div>;
-  if (!items.length) return <main className="mx-auto grid min-h-[65dvh] max-w-lg place-items-center px-6 text-center"><div><div className="mx-auto grid size-20 place-items-center rounded-full bg-white text-3xl shadow-sm">🥤</div><h1 className="mt-5 text-3xl font-bold">Korpa je prazna</h1><p className="mt-2 text-neutral-500">Izaberi napitak koji ćemo pripremiti za tebe.</p><Link href="/" className="mt-7 inline-flex items-center gap-2 rounded-full bg-black px-6 py-3 font-bold text-white"><ArrowLeft size={18} />Nazad na ponudu</Link></div></main>;
+  if (!items.length) return <main className="mx-auto grid min-h-[65dvh] max-w-lg place-items-center px-6 text-center"><div><div className="relative mx-auto grid size-20 place-items-center rounded-full bg-white text-neutral-400 shadow-sm"><ShoppingCart aria-hidden size={34} strokeWidth={1.75} /><span aria-hidden className="absolute -right-0.5 -top-0.5 grid size-7 place-items-center rounded-full border-2 border-[var(--background)] bg-neutral-100 text-sm font-bold text-neutral-400">0</span></div><h1 className="mt-5 text-3xl font-bold">Korpa je prazna</h1><p className="mt-2 text-neutral-500">Izaberi napitak koji ćemo pripremiti za tebe.</p><Link href="/" className="mt-7 inline-flex items-center gap-2 rounded-full bg-black px-6 py-3 font-bold text-white"><ArrowLeft size={18} />Nazad na ponudu</Link></div></main>;
   return (
     <main className="mx-auto max-w-3xl px-5 pb-44 pt-8 sm:px-8">
       <Link href="/" className="inline-flex min-h-11 items-center gap-2 font-semibold text-neutral-600"><ArrowLeft size={19} />Nastavi kupovinu</Link>

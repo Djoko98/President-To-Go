@@ -29,7 +29,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <div className="min-w-0"><Link href="/admin" onClick={() => setMenuOpen(false)} className="block truncate text-xl font-extrabold tracking-[-.04em]">President To Go</Link><p className="mt-1 text-xs font-bold uppercase tracking-[.14em] text-neutral-400 max-[820px]:hidden">Administracija</p></div>
           <div className="flex shrink-0 items-center gap-1">
             <span className="mr-1 hidden items-center gap-2 text-xs font-semibold text-emerald-700 max-[820px]:flex"><span className="size-2 rounded-full bg-emerald-500" />Online</span>
-            <form action={signOut}><button aria-label="Odjavi se" className="touch-target grid place-items-center rounded-full hover:bg-neutral-100"><LogOut size={19} /></button></form>
+            <form action={signOut}><button aria-label="Odjavi se" className="touch-target grid place-items-center rounded-full transition hover:bg-neutral-100 active:scale-90"><LogOut size={19} /></button></form>
             <button type="button" aria-label={menuOpen ? "Zatvori meni" : "Otvori meni"} aria-expanded={menuOpen} aria-controls="admin-navigation" onClick={() => setMenuOpen((open) => !open)} className="touch-target hidden place-items-center rounded-full bg-neutral-900 text-white max-[820px]:grid">{menuOpen ? <X size={21} /> : <Menu size={21} />}</button>
           </div>
         </div>
