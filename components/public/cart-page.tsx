@@ -16,9 +16,8 @@ export function CartPage() {
   if (!hydrated) return <div className="mx-auto mt-16 max-w-2xl animate-pulse px-5"><div className="h-32 rounded-3xl bg-neutral-200" /><div className="mt-4 h-32 rounded-3xl bg-neutral-200" /></div>;
   if (!items.length) return <main className="mx-auto grid min-h-[65dvh] max-w-lg place-items-center px-6 text-center"><div><div className="relative mx-auto grid size-20 place-items-center rounded-full bg-white text-neutral-400 shadow-sm"><ShoppingCart aria-hidden size={34} strokeWidth={1.75} /><span aria-hidden className="absolute -right-0.5 -top-0.5 grid size-7 place-items-center rounded-full border-2 border-[var(--background)] bg-neutral-100 text-sm font-bold text-neutral-400">0</span></div><h1 className="mt-5 text-3xl font-bold">Korpa je prazna</h1><p className="mt-2 text-neutral-500">Izaberi napitak koji ćemo pripremiti za tebe.</p><Link href="/" className="mt-7 inline-flex items-center gap-2 rounded-full bg-black px-6 py-3 font-bold text-white"><ArrowLeft size={18} />Nazad na ponudu</Link></div></main>;
   return (
-    <main className="mx-auto max-w-3xl px-5 pb-44 pt-8 sm:px-8">
-      <Link href="/" className="inline-flex min-h-11 items-center gap-2 font-semibold text-neutral-600"><ArrowLeft size={19} />Nastavi kupovinu</Link>
-      <h1 className="mt-5 text-4xl font-bold tracking-[-.05em]">Tvoja korpa</h1>
+    <main className="mx-auto max-w-3xl px-5 pb-44 pt-3 sm:px-8 sm:pt-4">
+      <h1 className="text-4xl font-bold tracking-[-.05em]">Tvoja korpa</h1>
       <div className="mt-8 divide-y divide-neutral-200">
         {items.map(({ product, quantity }) => <article key={product.id} className="grid grid-cols-[88px_minmax(0,1fr)] gap-4 py-5 sm:grid-cols-[110px_minmax(0,1fr)_auto] sm:items-center">
           <div className="relative h-28 w-20"><ProductImage src={product.image_url} alt={product.name} /></div>
