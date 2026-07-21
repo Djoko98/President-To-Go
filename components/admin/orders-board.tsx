@@ -20,7 +20,7 @@ async function notifyNewOrder() {
   const body = "Stigla je nova porudžbina.";
   try {
     const reg = "serviceWorker" in navigator ? await navigator.serviceWorker.ready : null;
-    if (reg) { await reg.showNotification("President To Go", { body, icon: "/icons/icon.svg", badge: "/icons/icon.svg", tag: "new-order" }); return; }
+    if (reg) { await reg.showNotification("President To Go", { body, icon: "/icons/icon-192x192.png", badge: "/icons/notification-badge-96x96.png", tag: "new-order" }); return; }
   } catch { /* fall back below */ }
   try { new Notification("President To Go", { body }); } catch { /* notifications unavailable */ }
 }

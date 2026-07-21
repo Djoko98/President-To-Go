@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
 
@@ -32,10 +33,20 @@ export function HeaderLogo() {
       onClick={handleTap}
       onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); router.push("/"); } }}
       onContextMenu={(event) => event.preventDefault()}
-      className="min-w-0 cursor-pointer select-none [-webkit-touch-callout:none]"
+      className="flex min-w-0 cursor-pointer select-none items-center gap-2.5 [-webkit-touch-callout:none] sm:gap-3"
     >
-      <span className="block text-[clamp(1.75rem,7vw,3.75rem)] font-semibold leading-none tracking-[-.055em]">President To Go</span>
-      <span className="mt-2 block text-[clamp(.85rem,3.5vw,1.15rem)] font-medium text-neutral-500">Žedan si? Poruči i osveži se.</span>
+      <Image
+        src="/brand/president-to-go-logo.png"
+        alt=""
+        width={1024}
+        height={1024}
+        priority
+        className="size-12 shrink-0 rounded-xl border border-black/5 bg-white shadow-sm sm:size-16 sm:rounded-2xl"
+      />
+      <span className="min-w-0">
+        <span className="block truncate text-[clamp(1.25rem,5vw,2.5rem)] font-semibold leading-none tracking-[-.055em]">President To Go</span>
+        <span className="mt-1.5 block truncate text-[clamp(.72rem,2.8vw,1rem)] font-medium text-neutral-500 sm:mt-2">Žedan si? Poruči i osveži se.</span>
+      </span>
     </div>
   );
 }

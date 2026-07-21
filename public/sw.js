@@ -1,5 +1,13 @@
-const CACHE = "president-to-go-v2";
-const STATIC = ["/", "/korpa", "/manifest.webmanifest", "/images/products/lubenito.png"];
+const CACHE = "president-to-go-v3";
+const STATIC = [
+  "/",
+  "/korpa",
+  "/manifest.webmanifest",
+  "/brand/president-to-go-logo.png",
+  "/icons/icon-192x192.png",
+  "/icons/icon-512x512.png",
+  "/images/products/lubenito.png",
+];
 self.addEventListener("install", (event) => { self.skipWaiting(); event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(STATIC))); });
 self.addEventListener("activate", (event) => event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))).then(() => self.clients.claim())));
 self.addEventListener("fetch", (event) => {
@@ -12,8 +20,8 @@ self.addEventListener("push", (event) => {
   const title = data.title || "President To Go";
   event.waitUntil(self.registration.showNotification(title, {
     body: data.body || "Stigla je nova porudžbina.",
-    icon: "/icons/icon.svg",
-    badge: "/icons/icon.svg",
+    icon: "/icons/icon-192x192.png",
+    badge: "/icons/notification-badge-96x96.png",
     tag: "new-order",
     renotify: true,
     data: { url: "/admin/porudzbine?tab=nove" },
