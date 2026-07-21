@@ -16,14 +16,21 @@ self.addEventListener("push", (event) => {
     badge: "/icons/icon.svg",
     tag: "new-order",
     renotify: true,
-    data: { url: data.url || "/admin/porudzbine" },
+    data: { url: "/admin/porudzbine?tab=nove" },
   }));
 });
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const target = (event.notification.data && event.notification.data.url) || "/admin/porudzbine";
-  event.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
-    for (const client of list) { if (client.url.includes(target) && "focus" in client) return client.focus(); }
+  const target = "/admin/porudzbine?tab=nove";
+  event.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(async (list) => {
+    // A window already on the orders page: focus it and switch to the "Nove" tab.
+    for (const client of list) {
+      if (client.url.includes("/admin/porudzbine")) { await client.focus(); client.postMessage({ type: "orders-tab", tab: "nove" }); return; }
+    }
+    // Any other open window: reuse it and navigate to the orders page.
+    for (const client of list) {
+      if ("navigate" in client) { try { await client.focus(); await client.navigate(target); return; } catch { /* fall back to openWindow */ } }
+    }
     if (self.clients.openWindow) return self.clients.openWindow(target);
   }));
 });

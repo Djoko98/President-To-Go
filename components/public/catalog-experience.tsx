@@ -71,6 +71,11 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
     if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
     go(productIndex + (dx < 0 ? 1 : -1));
   };
+  const swipeHandlers = {
+    onPointerDown: (event: React.PointerEvent) => { pointerStart.current = { x: event.clientX, y: event.clientY }; event.currentTarget.setPointerCapture(event.pointerId); },
+    onPointerUp,
+    onPointerCancel: () => { pointerStart.current = null; },
+  };
   const addToCart = () => {
     if (!product || !product.is_available) return;
     add(product, quantity);
@@ -99,6 +104,7 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
         </section>
       ) : (
         <section aria-label={`${activeCategory.name}: ${product.name}`} className="catalog-product-stage relative mx-auto flex w-full max-w-[820px] flex-col items-center justify-start px-5">
+          <div aria-hidden className="absolute inset-0 z-[3] touch-none" {...swipeHandlers} />
           <div aria-hidden className="pointer-events-none absolute left-1/2 top-[5%] z-0 -translate-x-1/2">
             <div className="catalog-product-glow rounded-full transition-all duration-700" style={{ background: `radial-gradient(circle at center, ${product.accent_color} 0%, ${product.accent_color} 22%, transparent 70%)`, opacity: 0.68 }} />
             <motion.div className="catalog-ring rounded-full border border-dashed" style={{ borderColor: product.accent_color }} animate={reduceMotion ? undefined : { rotate: 360 }} transition={{ repeat: Infinity, duration: 70, ease: "linear" }} />
@@ -124,7 +130,7 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
               </motion.div>
             </button>
           ) : null}
-          <div ref={imageRef} className="catalog-product-image relative z-10 cursor-grab touch-none select-none active:cursor-grabbing" onPointerDown={(event) => { pointerStart.current = { x: event.clientX, y: event.clientY }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerUp={onPointerUp} onPointerCancel={() => { pointerStart.current = null; }}>
+          <div ref={imageRef} className="catalog-product-image relative z-10 cursor-grab touch-none select-none active:cursor-grabbing" {...swipeHandlers}>
             <AnimatePresence initial={false} custom={direction}>
               <motion.div key={product.id} custom={direction} variants={canVariants} initial={reduceMotion ? false : "enter"} animate="center" exit={reduceMotion ? { opacity: 0 } : "exit"} transition={reduceMotion ? { duration: 0.15 } : { type: "spring", stiffness: 320, damping: 30, mass: 0.92 }} className="absolute inset-0">
                 <div aria-hidden className="catalog-can-shadow" />
