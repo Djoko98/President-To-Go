@@ -124,7 +124,7 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
               </motion.div>
             </button>
           ) : null}
-          <div ref={imageRef} className="catalog-product-image relative z-10 cursor-grab touch-pan-y select-none active:cursor-grabbing" onPointerDown={(event) => { pointerStart.current = { x: event.clientX, y: event.clientY }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerUp={onPointerUp} onPointerCancel={() => { pointerStart.current = null; }}>
+          <div ref={imageRef} className="catalog-product-image relative z-10 cursor-grab touch-none select-none active:cursor-grabbing" onPointerDown={(event) => { pointerStart.current = { x: event.clientX, y: event.clientY }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerUp={onPointerUp} onPointerCancel={() => { pointerStart.current = null; }}>
             <AnimatePresence initial={false} custom={direction}>
               <motion.div key={product.id} custom={direction} variants={canVariants} initial={reduceMotion ? false : "enter"} animate="center" exit={reduceMotion ? { opacity: 0 } : "exit"} transition={reduceMotion ? { duration: 0.15 } : { type: "spring", stiffness: 320, damping: 30, mass: 0.92 }} className="absolute inset-0">
                 <div aria-hidden className="catalog-can-shadow" />
