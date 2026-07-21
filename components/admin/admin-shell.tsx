@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { Archive, CalendarClock, ClipboardList, FolderKanban, Gauge, History, LogOut, Menu, Package, Settings, X } from "lucide-react";
 import { signOut } from "@/features/admin/actions";
@@ -27,10 +26,7 @@ export function AdminShell({ children, orderingEnabled }: { children: React.Reac
     <div className="admin-grid bg-[#f4f4f2]">
       <aside className="admin-sidebar relative z-50 border-r border-neutral-200 bg-white p-5 max-[820px]:sticky max-[820px]:top-0 max-[820px]:border-b max-[820px]:border-r-0 max-[820px]:px-4 max-[820px]:py-3">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <Image src="/brand/president-to-go-logo.png" alt="" width={1024} height={1024} className="size-10 shrink-0 rounded-xl border border-black/5 bg-white" />
-            <div className="min-w-0"><Link href="/admin" onClick={() => setMenuOpen(false)} className="block truncate text-xl font-extrabold tracking-[-.04em]">President To Go</Link><p className="mt-1 text-xs font-bold uppercase tracking-[.14em] text-neutral-400 max-[820px]:hidden">Administracija</p></div>
-          </div>
+          <div className="min-w-0"><Link href="/admin" onClick={() => setMenuOpen(false)} className="block truncate text-xl font-extrabold tracking-[-.04em]">President To Go</Link><p className="mt-1 text-xs font-bold uppercase tracking-[.14em] text-neutral-400 max-[820px]:hidden">Administracija</p></div>
           <div className="flex shrink-0 items-center gap-1">
             <span className={`mr-1 hidden items-center gap-2 text-xs font-semibold max-[820px]:flex ${orderingEnabled ? "text-emerald-700" : "text-neutral-500"}`}><span className={`size-2 rounded-full ${orderingEnabled ? "bg-emerald-500" : "bg-neutral-400"}`} />{orderingEnabled ? "Online" : "Offline"}</span>
             <form action={signOut}><button aria-label="Odjavi se" className="touch-target grid place-items-center rounded-full transition hover:bg-neutral-100 active:scale-90"><LogOut size={19} /></button></form>
