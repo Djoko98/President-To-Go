@@ -54,6 +54,7 @@ export interface PublicOrder {
   requested_pickup_at: string;
   confirmed_pickup_at: string | null;
   status: OrderStatus;
+  rejection_reason: string | null;
   total: number;
   created_at: string;
   items: Array<{ name: string; quantity: number; unit_price: number; line_total: number }>;
