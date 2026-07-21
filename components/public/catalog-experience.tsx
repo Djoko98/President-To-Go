@@ -75,7 +75,6 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
 
   return (
     <main className="home-catalog relative overflow-hidden">
-      {!catalog.orderingEnabled ? <div role="status" className="absolute inset-x-4 top-1 z-30 mx-auto max-w-xl rounded-2xl bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-950 shadow-sm">Online poručivanje je trenutno pauzirano.</div> : null}
       <CategorySelector categories={catalog.categories} activeId={activeCategoryId} onChange={changeCategory} />
       {!product ? (
         <section className="catalog-product-stage relative mx-auto grid w-full max-w-[820px] place-items-center px-5">
@@ -152,7 +151,7 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
           </div>
         </section>
       )}
-      {product ? <FloatingAddBar quantity={quantity} max={product.max_quantity_per_order} disabled={!catalog.orderingEnabled || !product.is_available} onChange={setQuantity} onAdd={addToCart} /> : null}
+      {product ? <FloatingAddBar quantity={quantity} max={product.max_quantity_per_order} disabled={!catalog.orderingEnabled || !product.is_available} paused={!catalog.orderingEnabled} onChange={setQuantity} onAdd={addToCart} /> : null}
     </main>
   );
 }
