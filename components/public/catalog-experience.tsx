@@ -4,13 +4,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Clock3 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { CategorySelector } from "@/components/public/category-selector";
 import { FloatingAddBar } from "@/components/public/floating-add-bar";
 import { ProductImage } from "@/components/shared/product-image";
 import { useCartStore } from "@/features/cart/store";
+import { PRODUCT_FALLBACK_IMAGE } from "@/lib/catalog-fallback";
 import { formatMoney } from "@/lib/money";
 import type { CatalogData } from "@/types/domain";
+
+type CartFlight = { id: number; src: string; x: number; y: number; w: number; h: number; dx: number; dy: number; scale: number };
 
 const canVariants = {
   enter: (direction: number) => ({ opacity: 0, x: direction * 92, scale: 0.82, rotate: direction * 8 }),
@@ -28,6 +30,8 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
   const [quantity, setQuantity] = useState(1);
   const add = useCartStore((state) => state.add);
   const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const imageRef = useRef<HTMLDivElement>(null);
+  const [flights, setFlights] = useState<CartFlight[]>([]);
 
   const products = useMemo(() => catalog.products.filter((item) => item.category_id === activeCategoryId), [catalog.products, activeCategoryId]);
   const product = products[productIndex] ?? products[0];
@@ -70,7 +74,17 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
   const addToCart = () => {
     if (!product || !product.is_available) return;
     add(product, quantity);
-    toast.success(`${quantity} × ${product.name} je dodato u korpu.`);
+    const source = imageRef.current?.getBoundingClientRect();
+    const target = document.getElementById("cart-fly-target")?.getBoundingClientRect();
+    if (!source || !target || reduceMotion) { window.dispatchEvent(new CustomEvent("cart:bump")); return; }
+    setFlights((prev) => [...prev, {
+      id: Date.now() + Math.random(),
+      src: product.image_url || PRODUCT_FALLBACK_IMAGE,
+      x: source.left, y: source.top, w: source.width, h: source.height,
+      dx: (target.left + target.width / 2) - (source.left + source.width / 2),
+      dy: (target.top + target.height / 2) - (source.top + source.height / 2),
+      scale: Math.max(0.12, Math.min(1, 46 / source.width)),
+    }]);
   };
 
   return (
@@ -110,7 +124,7 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
               </motion.div>
             </button>
           ) : null}
-          <div className="catalog-product-image relative z-10 cursor-grab touch-pan-y select-none active:cursor-grabbing" onPointerDown={(event) => { pointerStart.current = { x: event.clientX, y: event.clientY }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerUp={onPointerUp} onPointerCancel={() => { pointerStart.current = null; }}>
+          <div ref={imageRef} className="catalog-product-image relative z-10 cursor-grab touch-pan-y select-none active:cursor-grabbing" onPointerDown={(event) => { pointerStart.current = { x: event.clientX, y: event.clientY }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerUp={onPointerUp} onPointerCancel={() => { pointerStart.current = null; }}>
             <AnimatePresence initial={false} custom={direction}>
               <motion.div key={product.id} custom={direction} variants={canVariants} initial={reduceMotion ? false : "enter"} animate="center" exit={reduceMotion ? { opacity: 0 } : "exit"} transition={reduceMotion ? { duration: 0.15 } : { type: "spring", stiffness: 320, damping: 30, mass: 0.92 }} className="absolute inset-0">
                 <div aria-hidden className="catalog-can-shadow" />
@@ -152,6 +166,15 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
         </section>
       )}
       {product ? <FloatingAddBar quantity={quantity} max={product.max_quantity_per_order} disabled={!catalog.orderingEnabled || !product.is_available} paused={!catalog.orderingEnabled} onChange={setQuantity} onAdd={addToCart} /> : null}
+      {flights.map((flight) => (
+        <motion.img key={flight.id} src={flight.src} alt="" aria-hidden
+          initial={{ x: 0, y: 0, scale: 1, rotate: 0, opacity: 1 }}
+          animate={{ x: flight.dx, y: flight.dy, scale: flight.scale, rotate: 26, opacity: 0.85 }}
+          transition={{ duration: 0.72, ease: [0.4, 0, 0.2, 1] }}
+          onAnimationComplete={() => { window.dispatchEvent(new CustomEvent("cart:bump")); setFlights((prev) => prev.filter((item) => item.id !== flight.id)); }}
+          style={{ position: "fixed", left: flight.x, top: flight.y, width: flight.w, height: flight.h, transformOrigin: "center", pointerEvents: "none", zIndex: 60, objectFit: "contain" }}
+        />
+      ))}
     </main>
   );
 }
