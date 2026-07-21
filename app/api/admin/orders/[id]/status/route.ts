@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/security/admin";
 import { canTransitionOrder } from "@/lib/order-status";
 import type { OrderStatus } from "@/types/domain";
 
-const schema = z.object({ status: z.enum(["accepted","preparing","ready","completed","rejected","cancelled"]), pickupMinutes: z.number().int().min(5).max(180).nullish(), confirmedPickupAt: z.string().datetime().nullish(), note: z.string().trim().max(300).nullish() });
+const schema = z.object({ status: z.enum(["accepted","preparing","ready","completed","rejected","cancelled"]), pickupMinutes: z.number().int().min(5).max(180).nullish(), confirmedPickupAt: z.string().datetime({ offset: true }).nullish(), note: z.string().trim().max(300).nullish() });
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params; if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: "Porudžbina nije ispravna." }, { status: 400 });
   const parsed = schema.safeParse(await request.json()); if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message }, { status: 422 });
