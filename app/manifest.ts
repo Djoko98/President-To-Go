@@ -12,5 +12,9 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: "portrait-primary",
     lang: "sr-Latn",
     icons: [{ src: "/icons/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "maskable" }],
+    shortcuts: [
+      { name: "Poruči", short_name: "Poruči", url: "/" },
+      { name: "Administracija", short_name: "Admin", url: "/admin/porudzbine" },
+    ],
   };
 }
