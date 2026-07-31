@@ -1,11 +1,15 @@
-const CACHE = "president-to-go-v3";
+const CACHE = "president-to-go-v4";
 const STATIC = [
   "/",
   "/korpa",
   "/manifest.webmanifest",
   "/brand/president-to-go-logo.png",
+  "/icons/favicon-32x32.png",
+  "/icons/apple-touch-icon.png",
   "/icons/icon-192x192.png",
   "/icons/icon-512x512.png",
+  "/icons/maskable-icon-192x192.png",
+  "/icons/maskable-icon-512x512.png",
   "/images/products/lubenito.png",
 ];
 self.addEventListener("install", (event) => { self.skipWaiting(); event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(STATIC))); });
