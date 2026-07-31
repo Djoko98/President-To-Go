@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { ArrowLeft, ArrowRight, LoaderCircle } from "lucide-react";
+import { ArrowRight, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -68,9 +68,8 @@ export function CheckoutForm() {
 
   const fieldClass = "mt-2 min-h-12 w-full rounded-2xl border border-neutral-200 bg-white px-4 text-base outline-none transition focus:border-neutral-800";
   return (
-    <main className="mx-auto max-w-3xl px-5 pb-16 pt-6 sm:px-8">
-      <Link href="/korpa" className="inline-flex min-h-11 items-center gap-2 font-semibold text-neutral-600"><ArrowLeft size={19} />Nazad u korpu</Link>
-      <h1 className="mt-4 text-4xl font-bold tracking-[-.05em]">Podaci za preuzimanje</h1>
+    <main className="mx-auto max-w-3xl px-5 pb-16 pt-3 sm:px-8 sm:pt-4">
+      <h1 className="text-4xl font-bold tracking-[-.05em]">Podaci za preuzimanje</h1>
       <p className="mt-2 text-neutral-500">Plaćanje se vrši prilikom preuzimanja.</p>
       <form onSubmit={submit} className="mt-8 space-y-6" noValidate>
         <div><label htmlFor="customerName" className="font-bold">Ime i prezime</label><input id="customerName" autoComplete="name" aria-invalid={!!errors.customerName} className={fieldClass} {...register("customerName")} />{errors.customerName ? <p className="mt-1 text-sm font-semibold text-red-700">{errors.customerName.message}</p> : null}</div>
