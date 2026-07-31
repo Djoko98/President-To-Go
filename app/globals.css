@@ -16,12 +16,11 @@
 }
 
 * { box-sizing: border-box; }
-html { background: var(--background); color-scheme: light; overflow-x: hidden; overscroll-behavior: none; }
+html { background: var(--background); color-scheme: light; overflow-x: hidden; }
 body {
   margin: 0;
   min-height: 100dvh;
   overflow-x: hidden;
-  overscroll-behavior: none;
   background:
     radial-gradient(circle at 50% 26%, rgba(255,255,255,.96), rgba(245,245,243,0) 40%),
     var(--background);
@@ -46,7 +45,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .admin-content { min-height: 100dvh; }
 
 .public-home-header { height: var(--header-h); }
-.home-catalog { height: calc(100dvh - var(--header-h)); padding-bottom: calc(clamp(84px, 10.5dvh, 100px) + var(--safe-bottom)); }
+.home-catalog { height: calc(100dvh - var(--header-h)); padding-bottom: calc(clamp(84px, 10.5dvh, 100px) + var(--safe-bottom)); overscroll-behavior: none; }
 .catalog-categories { height: var(--cat-h); padding-bottom: clamp(10px, 1.6dvh, 16px); }
 .catalog-category-image { width: clamp(44px, 7dvh, 56px); height: clamp(44px, 7dvh, 56px); }
 .catalog-category-icon { width: clamp(20px, 3.2dvh, 25px); height: clamp(20px, 3.2dvh, 25px); }
