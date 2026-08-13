@@ -7,8 +7,13 @@ test("početni katalog staje u vidljivi ekran bez skrolovanja", async ({ page })
   expect(dimensions.page).toBeLessThanOrEqual(dimensions.viewport + 1);
   const categoriesFit = await page.evaluate(() => {
     const nav = document.querySelector<HTMLElement>("[aria-label='Kategorije']")?.getBoundingClientRect();
-    const items = [...document.querySelectorAll<HTMLElement>("[aria-label='Kategorije'] .category-arc")].map((item) => item.getBoundingClientRect());
-    return !!nav && items.length > 0 && items.every((item) => item.top >= nav.top && item.bottom <= nav.bottom);
+    const track = document.querySelector<HTMLElement>(".category-wheel")?.getBoundingClientRect();
+    if (!nav || !track) return false;
+    // Stavke van vidljivog dela točka nastavljaju niz kružnicu i odsečene su — merimo samo vidljive.
+    const items = [...document.querySelectorAll<HTMLElement>("[aria-label='Kategorije'] .category-arc")]
+      .map((item) => item.getBoundingClientRect())
+      .filter((item) => item.right > track.left && item.left < track.right);
+    return items.length > 0 && items.every((item) => item.top >= nav.top && item.bottom <= nav.bottom);
   });
   expect(categoriesFit).toBe(true);
   const addButton = page.getByRole("button", { name: /Dodaj u korpu/ });
@@ -55,6 +60,34 @@ test("točak se posle skrola sam poravnava na kategoriju", async ({ page }) => {
   expect(state.moved).toBe(true);
   expect(state.offset).toBeLessThanOrEqual(1.5);
   await expect(page).toHaveURL(/\?category=/);
+});
+
+test("zamah pomera točak za tačno jednu kategoriju", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator(".category-groups-plate")).toHaveAttribute("d", /^M /);
+  const names = await page.locator(".category-slot .category-label").allTextContents();
+  const activeName = () => page.locator('.category-slot[data-active="true"] .category-label').textContent();
+  const before = await activeName();
+
+  // Brz zamah preko tri stavke — svejedno sme da pomeri samo jednu.
+  await page.evaluate(() => {
+    const track = document.querySelector<HTMLElement>(".category-wheel")!;
+    const y = track.getBoundingClientRect().top + track.clientHeight / 2;
+    const at = (x: number) => ({ pointerId: 1, pointerType: "touch", isPrimary: true, bubbles: true, cancelable: true, composed: true, clientX: x, clientY: y });
+    track.dispatchEvent(new PointerEvent("pointerdown", at(300)));
+    for (let step = 1; step <= 8; step += 1) window.dispatchEvent(new PointerEvent("pointermove", at(300 - step * 30)));
+    window.dispatchEvent(new PointerEvent("pointerup", at(60)));
+  });
+  await page.waitForTimeout(1300);
+
+  const after = await activeName();
+  expect(names.indexOf(after ?? "") - names.indexOf(before ?? "")).toBe(1);
+  const offset = await page.evaluate(() => {
+    const track = document.querySelector<HTMLElement>(".category-wheel")!;
+    const slot = track.querySelector<HTMLElement>('.category-slot[data-active="true"]')!;
+    return Math.abs(slot.offsetLeft + slot.offsetWidth / 2 - track.scrollLeft - track.clientWidth / 2);
+  });
+  expect(offset).toBeLessThanOrEqual(1.5);
 });
 
 test("prikazuje najviše pet tačkica proizvoda", async ({ page }) => {

@@ -7,11 +7,14 @@ import type { Category, CategoryGroup } from "@/types/domain";
 
 type Slot = { key: string; category: Category | null };
 type GroupsShape = { plate: string; thumbs: Record<string, string> };
+type Drag = { x: number; scroll: number; time: number; index: number; lastX: number; lastTime: number; prevX: number; prevTime: number; moved: boolean };
 type Geometry = { arcs: HTMLElement[]; labels: Array<HTMLElement | null>; ids: Array<string | null>; centers: number[]; span: number; radius: number };
 
 const MIN_DROP = 16;
 const MAX_DROP = 46;
 const SETTLE_MS = 130;
+/** Gest kraći od ovoga je zamah (pomera tačno jedno mesto), duži je vučenje. */
+const FLICK_MS = 320;
 const BAND_GAP = 6;
 const LINE_GAP = 7;
 
@@ -68,6 +71,10 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
   const settleRef = useRef(0);
   const centeredRef = useRef(activeId);
   const committedRef = useRef("");
+  const dragRef = useRef<Drag | null>(null);
+  const draggedRef = useRef(false);
+  /** Cilj glatke animacije koju smo sami pokrenuli — poravnanje je ne sme preseći. */
+  const pendingRef = useRef<{ left: number; until: number } | null>(null);
   const [centeredId, setCenteredId] = useState(activeId);
   const [groupsShape, setGroupsShape] = useState<GroupsShape | null>(null);
 
@@ -89,10 +96,12 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
     const nav = navRef.current;
     if (!track || !nav) return;
     const elements = Array.from(track.querySelectorAll<HTMLElement>("[data-slot]"));
-    if (!elements.length) { geometryRef.current = null; return; }
+    // Dok se traka ne rasporedi (streaming, skriveni segment) merenje bi dalo besmislen luk.
+    if (!elements.length || !track.clientWidth || !track.clientHeight) { geometryRef.current = null; return; }
     const arcs = elements.map((slot) => slot.querySelector<HTMLElement>("[data-arc]") ?? slot);
-    // Luk zadržava isti oblik i na širokim ekranima: krajnji ugao se dostiže posle ~2.6 stavke.
-    const span = Math.max(96, Math.min(track.clientWidth / 2, (elements[0]?.offsetWidth ?? 72) * 2.6));
+    // Raspon je puna polovina trake: krajnja vidljiva stavka pada tačno onoliko koliko panel ima mesta,
+    // pa kružnica važi za ceo vidljivi deo — bez ravnog dela na ivicama.
+    const span = Math.max(96, track.clientWidth / 2);
     const height = Math.max(...arcs.map((arc) => arc.offsetHeight));
     const drop = Math.min(MAX_DROP, Math.max(MIN_DROP, track.clientHeight - height - 2));
     const radius = (span * span + drop * drop) / (2 * drop);
@@ -148,7 +157,9 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
     if (!track || !geometry) return false;
     const center = geometry.centers[geometry.ids.indexOf(id)];
     if (center === undefined) return false;
-    track.scrollTo({ left: center - track.clientWidth / 2, behavior });
+    const left = center - track.clientWidth / 2;
+    pendingRef.current = { left, until: performance.now() + 800 };
+    track.scrollTo({ left, behavior });
     return true;
   }, []);
 
@@ -169,10 +180,19 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
       const geometry = geometryRef.current;
       const id = centeredRef.current;
       if (!geometry || !id) return;
+      // Ako naša glatka animacija još putuje ka cilju, sačekaj je umesto da je presečeš.
+      const pending = pendingRef.current;
+      if (pending && performance.now() < pending.until && Math.abs(track.scrollLeft - pending.left) > 2) {
+        settleRef.current = window.setTimeout(settle, SETTLE_MS);
+        return;
+      }
+      pendingRef.current = null;
       // CSS snap je isključen — poravnanje na najbližu stavku dovršavamo sami kad se skrol smiri.
       const center = geometry.centers[geometry.ids.indexOf(id)];
       if (center !== undefined && Math.abs(center - track.clientWidth / 2 - track.scrollLeft) > 1) {
-        track.scrollTo({ left: center - track.clientWidth / 2, behavior: instant ? "auto" : "smooth" });
+        const left = center - track.clientWidth / 2;
+        pendingRef.current = { left, until: performance.now() + 800 };
+        track.scrollTo({ left, behavior: instant ? "auto" : "smooth" });
       }
       const category = id !== selected ? map.get(id) : undefined;
       if (!category) return;
@@ -181,13 +201,86 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
     };
     const onScroll = () => {
       if (!frameRef.current) frameRef.current = requestAnimationFrame(() => { frameRef.current = 0; paint(); });
+      // Dok prst vuče točak ne poravnavamo — kraj gesta odlučuje gde se staje.
+      if (dragRef.current) return;
       window.clearTimeout(settleRef.current);
       settleRef.current = window.setTimeout(settle, SETTLE_MS);
     };
     const onWheel = (event: WheelEvent) => {
-      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+      if (!delta) return;
       event.preventDefault();
-      track.scrollLeft += event.deltaY;
+      pendingRef.current = null;
+      track.scrollLeft += delta;
+    };
+
+    /** Pomeraj za tačno jednu kategoriju od zadate stavke (razdvojnik se preskače). */
+    const stepTo = (fromIndex: number, step: number) => {
+      const geometry = geometryRef.current;
+      if (!geometry) return;
+      const categories = geometry.ids.map((id, index) => (id ? index : -1)).filter((index) => index >= 0);
+      const position = categories.indexOf(fromIndex);
+      const target = categories[Math.max(0, Math.min(categories.length - 1, (position < 0 ? 0 : position) + step))];
+      const center = target === undefined ? undefined : geometry.centers[target];
+      if (center === undefined) return;
+      const left = center - track.clientWidth / 2;
+      pendingRef.current = { left, until: performance.now() + 800 };
+      track.scrollTo({ left, behavior: latest.current.reduceMotion ? "auto" : "smooth" });
+      window.clearTimeout(settleRef.current);
+      settleRef.current = window.setTimeout(settle, SETTLE_MS + 260);
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      const now = performance.now();
+      if (now - drag.lastTime > 24) { drag.prevX = drag.lastX; drag.prevTime = drag.lastTime; }
+      drag.lastX = event.clientX;
+      drag.lastTime = now;
+      const delta = event.clientX - drag.x;
+      if (Math.abs(delta) > 4) { drag.moved = true; draggedRef.current = true; }
+      track.scrollLeft = drag.scroll - delta;
+    };
+    const onPointerUp = () => {
+      const drag = dragRef.current;
+      dragRef.current = null;
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+      // Dodir bez pomeranja: vraćamo odloženo poravnanje koje je pointerdown otkazao.
+      if (!drag?.moved) {
+        window.clearTimeout(settleRef.current);
+        settleRef.current = window.setTimeout(settle, SETTLE_MS);
+        return;
+      }
+      const geometry = geometryRef.current;
+      if (!geometry) return;
+      const elapsed = performance.now() - drag.time;
+      const distance = drag.lastX - drag.x;
+      const window_ = drag.lastTime - drag.prevTime;
+      const velocity = window_ > 0 ? (drag.lastX - drag.prevX) / window_ : 0;
+      const quick = elapsed < FLICK_MS;
+      // Kratak, brz zamah = tačno jedno mesto; sporo prevlačenje ide gde je korisnik odvukao.
+      if (Math.abs(distance) > 8 && (quick || Math.abs(velocity) > 0.45)) {
+        const direction = Math.abs(velocity) > 0.05 ? -Math.sign(velocity) : -Math.sign(distance);
+        stepTo(quick ? drag.index : geometry.ids.indexOf(centeredRef.current), direction || 1);
+        return;
+      }
+      settle();
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      const geometry = geometryRef.current;
+      if (!geometry) return;
+      window.clearTimeout(settleRef.current);
+      settleRef.current = 0;
+      pendingRef.current = null;
+      const now = performance.now();
+      dragRef.current = { x: event.clientX, scroll: track.scrollLeft, time: now, index: geometry.ids.indexOf(centeredRef.current), lastX: event.clientX, lastTime: now, prevX: event.clientX, prevTime: now, moved: false };
+      draggedRef.current = false;
+      window.addEventListener("pointermove", onPointerMove);
+      window.addEventListener("pointerup", onPointerUp);
+      window.addEventListener("pointercancel", onPointerUp);
     };
     const observer = new ResizeObserver(() => {
       measure();
@@ -198,10 +291,15 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
     observer.observe(track);
     track.addEventListener("scroll", onScroll, { passive: true });
     track.addEventListener("wheel", onWheel, { passive: false });
+    track.addEventListener("pointerdown", onPointerDown);
     return () => {
       observer.disconnect();
       track.removeEventListener("scroll", onScroll);
       track.removeEventListener("wheel", onWheel);
+      track.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
       window.clearTimeout(settleRef.current);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
     };
@@ -214,6 +312,8 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
   }, [activeId, centerOn, reduceMotion]);
 
   const select = (category: Category) => {
+    // Klik koji zatvara prevlačenje ne bira kategoriju.
+    if (draggedRef.current) { draggedRef.current = false; return; }
     // Oznaka „sami smo pomerili točak" važi samo ako je centriranje stvarno prošlo.
     if (centerOn(category.id, reduceMotion ? "auto" : "smooth")) committedRef.current = category.id;
     if (category.id !== activeId) onChange(category);
