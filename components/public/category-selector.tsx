@@ -81,8 +81,8 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
   }), [ordered]);
 
   const byId = useMemo(() => new Map(ordered.map((category) => [category.id, category])), [ordered]);
-  const latest = useRef({ activeId, onChange, byId });
-  useEffect(() => { latest.current = { activeId, onChange, byId }; });
+  const latest = useRef({ activeId, onChange, byId, reduceMotion });
+  useEffect(() => { latest.current = { activeId, onChange, byId, reduceMotion }; });
 
   const measure = useCallback(() => {
     const track = trackRef.current;
@@ -126,7 +126,8 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
     let nearest = Infinity;
     geometry.centers.forEach((center, index) => {
       const distance = center - viewCenter;
-      const clamped = Math.max(-geometry.span, Math.min(geometry.span, distance));
+      // Klamp tek na poluprečniku: stavka prati kružnicu do kraja, bez ravne „police" na ivicama.
+      const clamped = Math.max(-geometry.radius, Math.min(geometry.radius, distance));
       const drop = geometry.radius - Math.sqrt(Math.max(0, geometry.radius * geometry.radius - clamped * clamped));
       const ratio = Math.min(1, Math.abs(distance) / geometry.span);
       const arc = geometry.arcs[index];
@@ -163,10 +164,17 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
     const track = trackRef.current;
     if (!track) return;
     const settle = () => {
-      const { activeId: selected, onChange: change, byId: map } = latest.current;
+      const { activeId: selected, onChange: change, byId: map, reduceMotion: instant } = latest.current;
       settleRef.current = 0;
+      const geometry = geometryRef.current;
       const id = centeredRef.current;
-      const category = id && id !== selected ? map.get(id) : undefined;
+      if (!geometry || !id) return;
+      // CSS snap je isključen — poravnanje na najbližu stavku dovršavamo sami kad se skrol smiri.
+      const center = geometry.centers[geometry.ids.indexOf(id)];
+      if (center !== undefined && Math.abs(center - track.clientWidth / 2 - track.scrollLeft) > 1) {
+        track.scrollTo({ left: center - track.clientWidth / 2, behavior: instant ? "auto" : "smooth" });
+      }
+      const category = id !== selected ? map.get(id) : undefined;
       if (!category) return;
       committedRef.current = category.id;
       change(category);

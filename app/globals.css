@@ -82,10 +82,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .category-arc-marker { top: calc(var(--arc-cy, 500px) - var(--arc-line-r, 460px) - 1px); width: 26px; height: 3px; border-radius: 999px; background: var(--foreground); }
 /* position: relative čini točak offsetParent-om stavki — merenje pozicija zavisi od toga. */
-.category-wheel { position: relative; flex: 1 1 auto; min-height: 0; width: min(100%, 560px); margin-inline: auto; margin-top: 10px; display: flex; align-items: flex-start; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; touch-action: pan-x; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+/* Bez CSS snap-a: poravnanje radi settle logika u komponenti, pa se skrol i snap ne bore. */
+.category-wheel { position: relative; flex: 1 1 auto; min-height: 0; width: min(100%, 560px); margin-inline: auto; margin-top: 10px; display: flex; align-items: flex-start; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; touch-action: pan-x; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .category-wheel::-webkit-scrollbar { display: none; }
 .category-rail { flex: 0 0 calc(50% - var(--cat-slot-w) / 2); }
-.category-slot { flex: 0 0 var(--cat-slot-w); height: 100%; min-width: 0; display: flex; align-items: flex-start; justify-content: center; padding: 0; border: 0; background: none; scroll-snap-align: center; cursor: pointer; }
+.category-slot { flex: 0 0 var(--cat-slot-w); height: 100%; min-width: 0; display: flex; align-items: flex-start; justify-content: center; padding: 0; border: 0; background: none; cursor: pointer; }
 .category-slot[data-active="true"] { position: relative; z-index: 2; }
 .category-divider { flex: 0 0 clamp(26px, 4dvh, 34px); height: 100%; display: flex; align-items: flex-start; justify-content: center; }
 .category-arc { display: flex; flex-direction: column; align-items: center; gap: clamp(3px, .55dvh, 6px); will-change: transform, opacity; }
@@ -99,7 +100,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .catalog-product-stage { height: calc(100% - var(--cat-h)); min-height: 0; padding-top: var(--stage-top); }
 .catalog-product-image { height: var(--can-h); width: var(--can-w); flex: 0 0 auto; }
 .catalog-product-glow { height: clamp(260px, 48dvh, 440px); width: clamp(260px, 48dvh, 440px); }
-.catalog-ring { position: absolute; inset: 11%; opacity: .38; }
 .catalog-peek { position: absolute; z-index: 4; top: calc(var(--stage-top) + var(--can-h) * .22); height: calc(var(--can-h) * .58); width: calc(var(--can-w) * .58); opacity: .32; filter: saturate(.7) blur(1.1px); transition: opacity .3s ease, transform .3s ease, filter .3s ease; }
 .catalog-peek:hover, .catalog-peek:focus-visible { opacity: .6; filter: saturate(.95) blur(.3px); }
 .catalog-peek-left { left: min(calc(7vw - 40px), 110px); transform: rotate(-7deg); }

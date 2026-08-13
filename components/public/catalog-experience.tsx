@@ -147,7 +147,6 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
         <section {...swipeHandlers} aria-label={`${activeCategory.name}: ${product.name}`} className="catalog-product-stage relative mx-auto flex w-full max-w-[820px] touch-none flex-col items-center justify-start px-5">
           <div aria-hidden className="pointer-events-none absolute left-1/2 top-[5%] z-0 -translate-x-1/2">
             <div className="catalog-product-glow rounded-full transition-all duration-700" style={{ background: `radial-gradient(circle at center, ${product.accent_color} 0%, ${product.accent_color} 22%, transparent 70%)`, opacity: 0.68 }} />
-            <motion.div className="catalog-ring rounded-full border border-dashed" style={{ borderColor: `color-mix(in srgb, ${product.accent_color} 45%, #6f6f66)` }} animate={reduceMotion ? undefined : { rotate: 360 }} transition={{ repeat: Infinity, duration: 70, ease: "linear" }} />
           </div>
           {prevProduct ? (
             <button type="button" onClick={afterSwipe(() => go(productIndex - 1))} aria-label={`Prethodni proizvod: ${prevProduct.name}`} className="catalog-peek catalog-peek-left">

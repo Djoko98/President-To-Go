@@ -36,8 +36,34 @@ test("točak kategorija razdvaja piće i hranu", async ({ page }) => {
   expect(scrolled).toBeGreaterThan(0);
 });
 
+test("točak se posle skrola sam poravnava na kategoriju", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator(".category-groups-plate")).toHaveAttribute("d", /^M /);
+  await page.evaluate(() => {
+    const track = document.querySelector<HTMLElement>(".category-wheel")!;
+    for (let i = 0; i < 4; i += 1) track.dispatchEvent(new WheelEvent("wheel", { deltaY: 95, bubbles: true, cancelable: true }));
+  });
+  await page.waitForTimeout(1500);
+  const state = await page.evaluate(() => {
+    const track = document.querySelector<HTMLElement>(".category-wheel")!;
+    const active = track.querySelector<HTMLElement>('.category-slot[data-active="true"]')!;
+    return {
+      offset: Math.abs(active.offsetLeft + active.offsetWidth / 2 - track.scrollLeft - track.clientWidth / 2),
+      moved: track.scrollLeft > 0,
+    };
+  });
+  expect(state.moved).toBe(true);
+  expect(state.offset).toBeLessThanOrEqual(1.5);
+  await expect(page).toHaveURL(/\?category=/);
+});
+
 test("prikazuje najviše pet tačkica proizvoda", async ({ page }) => {
   await page.goto("/");
+  // Streaming drži sadržaj u skrivenom segmentu (rect 0×0) dok se ne otkrije — čekamo pravi layout.
+  await page.waitForFunction(() => {
+    const strip = document.querySelector(".catalog-dots");
+    return !!strip && strip.getBoundingClientRect().width > 0;
+  });
   const dots = await page.evaluate(() => {
     const strip = document.querySelector(".catalog-dots");
     if (!strip) return null;
@@ -57,6 +83,7 @@ test("prikazuje najviše pet tačkica proizvoda", async ({ page }) => {
 test("Android scroll pravila važe samo na početnom katalogu", async ({ page }) => {
   await page.goto("/");
   const home = await page.evaluate(() => ({
+    supported: CSS.supports("overscroll-behavior", "none"),
     viewport: window.innerHeight,
     page: document.documentElement.scrollHeight,
     htmlOverscroll: getComputedStyle(document.documentElement).overscrollBehavior,
@@ -64,6 +91,8 @@ test("Android scroll pravila važe samo na početnom katalogu", async ({ page })
     catalogOverscroll: getComputedStyle(document.querySelector(".home-catalog")!).overscrollBehavior,
   }));
   expect(home.page).toBeLessThanOrEqual(home.viewport + 1);
+  // Stariji WebKit ne implementira overscroll-behavior — tamo proveravamo samo visinu stranice.
+  if (!home.supported) return;
   expect(home.htmlOverscroll).toBe("auto");
   expect(home.bodyOverscroll).toBe("auto");
   expect(home.catalogOverscroll).toBe("none");
