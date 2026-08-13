@@ -184,7 +184,7 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
     <nav ref={navRef} aria-label="Kategorije" className="catalog-categories relative z-20 w-full">
       {groups.length > 1 ? (
         <div className="category-groups">
-          <div className="category-groups-track" role="group" aria-label="Grupe kategorija">
+          <div data-groups className="category-groups-track" role="group" aria-label="Grupe kategorija">
             {groups.map((group) => {
               const isActive = group.key === activeGroup;
               const first = ordered.find((category) => category.group_key === group.key);

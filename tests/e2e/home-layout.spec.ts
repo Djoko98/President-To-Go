@@ -34,6 +34,24 @@ test("točak kategorija razdvaja piće i hranu", async ({ page }) => {
   expect(scrolled).toBeGreaterThan(0);
 });
 
+test("prikazuje najviše pet tačkica proizvoda", async ({ page }) => {
+  await page.goto("/");
+  const dots = await page.evaluate(() => {
+    const strip = document.querySelector(".catalog-dots");
+    if (!strip) return null;
+    const box = strip.getBoundingClientRect();
+    const buttons = [...strip.querySelectorAll("button")];
+    const inside = buttons.filter((button) => {
+      const dot = button.getBoundingClientRect();
+      return dot.left >= box.left - 1 && dot.right <= box.right + 1;
+    });
+    return { total: buttons.length, visible: inside.length };
+  });
+  expect(dots).not.toBeNull();
+  expect(dots!.visible).toBeLessThanOrEqual(5);
+  expect(dots!.visible).toBe(Math.min(5, dots!.total));
+});
+
 test("Android scroll pravila važe samo na početnom katalogu", async ({ page }) => {
   await page.goto("/");
   const home = await page.evaluate(() => ({
@@ -59,8 +77,10 @@ test("Android scroll pravila važe samo na početnom katalogu", async ({ page })
 
 test("promena proizvoda nema odsečenu senku", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Prikaži Aperol Spritz" }).click();
-  await expect(page.getByRole("heading", { name: "Aperol Spritz" })).toBeVisible();
+  const heading = page.locator(".catalog-product-stage h1");
+  const first = (await heading.textContent()) ?? "";
+  await page.getByRole("button", { name: /^Sledeći proizvod:/ }).click();
+  await expect(heading).not.toHaveText(first);
   const imageFilters = await page.locator(".catalog-product-image > div").evaluateAll((elements) => elements.map((element) => getComputedStyle(element).filter));
   expect(imageFilters.every((filter) => filter === "none")).toBe(true);
 });
