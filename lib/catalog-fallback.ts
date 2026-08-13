@@ -8,7 +8,7 @@ export const fallbackCategories: Category[] = [
   category("cat-kafe", "Kafe", "kafe", "drinks", 1),
   category("cat-vocni", "Voćni napici", "vocni-napici", "drinks", 2),
   category("cat-dorucak", "Doručak", "dorucak", "food", 3),
-  category("cat-posno", "Posno", "posno", "food", 4),
+  category("cat-morski-plodovi", "Morski plodovi", "morski-plodovi", "food", 4),
   category("cat-paste", "Paste", "paste", "food", 5),
   category("cat-rizoto", "Rižoto", "rizoto", "food", 6),
   category("cat-pice", "Pice", "pice", "food", 7),

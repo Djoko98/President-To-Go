@@ -59,4 +59,4 @@ Lubenito 3D asset je generisan za ovaj projekat i nalazi se u `public/images/pro
 
 ## Kategorije
 
-Kategorije su podeljene u dve grupe preko kolone `categories.group_key` (`drinks` = piće, `food` = hrana). Gost ih bira u polukružnom točku koji se skroluje (`CategorySelector`); između grupa stoji razdvojnik, a dugmad „Piće” i „Hrana” skaču na početak grupe. Ikonice se mapiraju po slug-u u `lib/categories.tsx` — nova kategorija bez svoje ikonice dobija podrazumevanu ikonicu svoje grupe. Grupa se menja u adminu (`/admin/kategorije`).
+Kategorije su podeljene u dve grupe preko kolone `categories.group_key` (`drinks` = piće, `food` = hrana). Gost ih bira u polukružnom točku koji se skroluje (`CategorySelector`); između grupa stoji razdvojnik, a dugmad „Piće” i „Hrana” skaču na početak grupe. Ikonice se mapiraju po slug-u u `lib/categories.tsx` — nova kategorija bez svoje ikonice dobija podrazumevanu ikonicu svoje grupe. Većina je iz `lucide-react`; pasta i suši su nacrtani u istom stilu jer ih lucide nema. Grupa se menja u adminu (`/admin/kategorije`).

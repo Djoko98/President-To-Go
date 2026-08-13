@@ -1,22 +1,51 @@
-import { CakeSlice, Citrus, Coffee, CookingPot, CupSoda, EggFried, Flame, GlassWater, Leaf, Martini, Pizza, Salad, Utensils, UtensilsCrossed, Wheat, type LucideIcon } from "lucide-react";
+import type { ComponentType, ReactNode } from "react";
+import { CakeSlice, Citrus, Coffee, CupSoda, EggFried, Fish, Flame, GlassWater, Martini, Pizza, Salad, Utensils, UtensilsCrossed } from "lucide-react";
 import type { Category, CategoryGroup } from "@/types/domain";
 
-export const CATEGORY_GROUPS: Array<{ key: CategoryGroup; label: string; icon: LucideIcon }> = [
+type IconProps = { className?: string; strokeWidth?: number; "aria-hidden"?: boolean };
+type CategoryIconComponent = ComponentType<IconProps>;
+
+export const CATEGORY_GROUPS: Array<{ key: CategoryGroup; label: string; icon: CategoryIconComponent }> = [
   { key: "drinks", label: "Piće", icon: CupSoda },
   { key: "food", label: "Hrana", icon: UtensilsCrossed },
 ];
 
 const GROUP_ORDER: Record<CategoryGroup, number> = { drinks: 0, food: 1 };
-const GROUP_FALLBACK_ICON: Record<CategoryGroup, LucideIcon> = { drinks: GlassWater, food: UtensilsCrossed };
+const GROUP_FALLBACK_ICON: Record<CategoryGroup, CategoryIconComponent> = { drinks: GlassWater, food: UtensilsCrossed };
 
-const CATEGORY_ICONS: Record<string, LucideIcon> = {
+/** Lucide nema ikonicu za pastu i suši, pa su nacrtane u istom stilu (24×24, currentColor). */
+function StrokeIcon({ children, className, strokeWidth = 2 }: IconProps & { children: ReactNode }) {
+  return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden className={className}>{children}</svg>;
+}
+
+function PastaIcon(props: IconProps) {
+  return (
+    <StrokeIcon {...props}>
+      <path d="M2.5 15.5h19" />
+      <path d="M4.5 15.5c1 3 4 5 7.5 5s6.5-2 7.5-5" />
+      <path d="M6 12.9c.9-1.5 2.1-1.5 3 0s2.1 1.5 3 0 2.1-1.5 3 0 2.1 1.5 3 0" />
+      <path d="M7.5 9.9c.9-1.5 2.1-1.5 3 0s2.1 1.5 3 0 2.1-1.5 3 0" />
+    </StrokeIcon>
+  );
+}
+
+function SushiIcon(props: IconProps) {
+  return (
+    <StrokeIcon {...props}>
+      <path d="M3.5 13.2h17v1.6a3 3 0 0 1-3 3h-11a3 3 0 0 1-3-3Z" />
+      <path d="M6 13.2c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+    </StrokeIcon>
+  );
+}
+
+const CATEGORY_ICONS: Record<string, CategoryIconComponent> = {
   kokteli: Martini,
   kafe: Coffee,
   "vocni-napici": Citrus,
   dorucak: EggFried,
-  posno: Leaf,
-  paste: Wheat,
-  rizoto: CookingPot,
+  "morski-plodovi": Fish,
+  paste: PastaIcon,
+  rizoto: SushiIcon,
   pice: Pizza,
   "sa-rostilja": Flame,
   "glavna-jela": Utensils,

@@ -11,6 +11,8 @@ type Geometry = { arcs: HTMLElement[]; labels: Array<HTMLElement | null>; ids: A
 const MIN_DROP = 16;
 const MAX_DROP = 46;
 const SETTLE_MS = 130;
+const BAND_GAP = 6;
+const LINE_GAP = 7;
 
 function WheelSlot({ category, centered, active, onSelect }: { category: Category; centered: boolean; active: boolean; onSelect: (category: Category) => void }) {
   return (
@@ -54,13 +56,18 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
     const elements = Array.from(track.querySelectorAll<HTMLElement>("[data-slot]"));
     if (!elements.length) { geometryRef.current = null; return; }
     const arcs = elements.map((slot) => slot.querySelector<HTMLElement>("[data-arc]") ?? slot);
-    const badge = track.querySelector<HTMLElement>("[data-arc-badge]");
     // Luk zadržava isti oblik i na širokim ekranima: krajnji ugao se dostiže posle ~2.6 stavke.
     const span = Math.max(96, Math.min(track.clientWidth / 2, (elements[0]?.offsetWidth ?? 72) * 2.6));
-    const drop = Math.min(MAX_DROP, Math.max(MIN_DROP, track.clientHeight - Math.max(...arcs.map((arc) => arc.offsetHeight)) - 2));
+    const height = Math.max(...arcs.map((arc) => arc.offsetHeight));
+    const drop = Math.min(MAX_DROP, Math.max(MIN_DROP, track.clientHeight - height - 2));
     const radius = (span * span + drop * drop) / (2 * drop);
-    nav.style.setProperty("--arc-radius", `${Math.round(radius)}px`);
-    nav.style.setProperty("--arc-top", `${Math.round(track.offsetTop + (badge?.offsetHeight ?? 0) / 2)}px`);
+    // Pozadina točka i linija ispod naziva su koncentrični krugovi sa istim centrom kao i stavke.
+    nav.style.setProperty("--arc-cy", `${Math.round(track.offsetTop + height / 2 + radius)}px`);
+    nav.style.setProperty("--arc-band-r", `${Math.round(radius + height / 2 + BAND_GAP)}px`);
+    nav.style.setProperty("--arc-line-r", `${Math.round(radius - height / 2 - LINE_GAP)}px`);
+    // Pozadina i linija se stapaju sa stranicom pre nego što ih donja ivica navigacije preseče.
+    nav.style.setProperty("--arc-band-fade", `${Math.max(48, Math.round(nav.clientHeight - track.offsetTop + BAND_GAP))}px`);
+    nav.style.setProperty("--arc-line-fade", `${Math.max(24, Math.round(nav.clientHeight - track.offsetTop - height - LINE_GAP))}px`);
     geometryRef.current = {
       arcs,
       labels: elements.map((slot) => slot.querySelector<HTMLElement>("[data-arc-label]")),
@@ -90,7 +97,7 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
       arc.style.transform = `translate3d(0,${drop.toFixed(2)}px,0) rotate(${angle.toFixed(2)}deg) scale(${(1 - 0.2 * ratio).toFixed(3)})`;
       arc.style.opacity = (1 - 0.62 * ratio).toFixed(3);
       const label = geometry.labels[index];
-      if (label) label.style.opacity = Math.max(0, 1 - 2.2 * ratio).toFixed(3);
+      if (label) label.style.opacity = Math.max(0, 1 - 1.25 * ratio).toFixed(3);
       const id = geometry.ids[index];
       if (id && Math.abs(distance) < nearest) { nearest = Math.abs(distance); nearestId = id; }
     });
@@ -173,7 +180,7 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
           </div>
         </div>
       ) : null}
-      <span aria-hidden className="category-arc-guide" />
+      <span aria-hidden className="category-arc-band" />
       <div ref={trackRef} className="category-wheel">
         <span aria-hidden className="category-rail" />
         {slots.map((slot) => slot.category ? (
@@ -185,6 +192,8 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
         ))}
         <span aria-hidden className="category-rail" />
       </div>
+      <span aria-hidden className="category-arc-line" />
+      <span aria-hidden className="category-arc-marker" />
     </nav>
   );
 }

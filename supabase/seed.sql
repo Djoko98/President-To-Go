@@ -17,7 +17,7 @@ insert into public.categories(name, slug, group_key, image_url, position) values
   ('Kafe', 'kafe', 'drinks', '/images/products/lubenito.png', 1),
   ('Voćni napici', 'vocni-napici', 'drinks', '/images/products/lubenito.png', 2),
   ('Doručak', 'dorucak', 'food', null, 3),
-  ('Posno', 'posno', 'food', null, 4),
+  ('Morski plodovi', 'morski-plodovi', 'food', null, 4),
   ('Paste', 'paste', 'food', null, 5),
   ('Rižoto', 'rizoto', 'food', null, 6),
   ('Pice', 'pice', 'food', null, 7),

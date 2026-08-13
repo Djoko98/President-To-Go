@@ -9,7 +9,7 @@
   --line: #dededb;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --header-h: clamp(70px, 11.5dvh, 112px);
-  --cat-h: clamp(132px, 19.5dvh, 162px);
+  --cat-h: clamp(142px, 20.6dvh, 172px);
   --cat-groups-h: clamp(26px, 3.6dvh, 31px);
   --cat-slot-w: clamp(66px, 10dvh, 80px);
   --cat-badge: clamp(42px, 6.6dvh, 54px);
@@ -59,10 +59,27 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .category-group-pill { position: absolute; inset: 0; border-radius: 999px; background: var(--foreground); box-shadow: 0 6px 16px rgba(21,21,21,.26); }
 .category-group-icon { position: relative; z-index: 1; width: clamp(11px, 1.6dvh, 14px); height: clamp(11px, 1.6dvh, 14px); }
 
-/* Polukružni točak kategorija */
-.category-arc-guide { position: absolute; left: 50%; top: var(--arc-top, 62px); width: calc(var(--arc-radius, 480px) * 2); height: calc(var(--arc-radius, 480px) * 2); margin-left: calc(var(--arc-radius, 480px) * -1); border-radius: 50%; border-top: 1.5px dashed rgba(21,21,21,.13); pointer-events: none; }
+/* Polukružni točak kategorija — pozadina i linija su koncentrični krugovi sa stavkama */
+.category-arc-band, .category-arc-line, .category-arc-marker { position: absolute; left: 50%; translate: -50% 0; pointer-events: none; }
+.category-arc-band, .category-arc-line { border-radius: 50%; }
+.category-arc-band {
+  top: calc(var(--arc-cy, 500px) - var(--arc-band-r, 520px));
+  width: calc(var(--arc-band-r, 520px) * 2); height: calc(var(--arc-band-r, 520px) * 2);
+  border-top: 1px solid rgba(21,21,21,.07);
+  background: #fff;
+  --arc-band-mask: linear-gradient(to bottom, #000 0, #000 calc(var(--arc-band-fade, 120px) * .34), rgba(0,0,0,.55) calc(var(--arc-band-fade, 120px) * .7), transparent var(--arc-band-fade, 120px));
+  -webkit-mask-image: var(--arc-band-mask); mask-image: var(--arc-band-mask);
+}
+.category-arc-line {
+  top: calc(var(--arc-cy, 500px) - var(--arc-line-r, 460px));
+  width: calc(var(--arc-line-r, 460px) * 2); height: calc(var(--arc-line-r, 460px) * 2);
+  border-top: 1.5px solid rgba(21,21,21,.16);
+  --arc-line-mask: linear-gradient(to bottom, #000 0, #000 calc(var(--arc-line-fade, 40px) * .45), transparent var(--arc-line-fade, 40px));
+  -webkit-mask-image: var(--arc-line-mask); mask-image: var(--arc-line-mask);
+}
+.category-arc-marker { top: calc(var(--arc-cy, 500px) - var(--arc-line-r, 460px) - 1px); width: 26px; height: 3px; border-radius: 999px; background: var(--foreground); }
 /* position: relative čini točak offsetParent-om stavki — merenje pozicija zavisi od toga. */
-.category-wheel { position: relative; flex: 1 1 auto; min-height: 0; width: min(100%, 560px); margin-inline: auto; display: flex; align-items: flex-start; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; touch-action: pan-x; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.category-wheel { position: relative; flex: 1 1 auto; min-height: 0; width: min(100%, 560px); margin-inline: auto; margin-top: 10px; display: flex; align-items: flex-start; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; touch-action: pan-x; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .category-wheel::-webkit-scrollbar { display: none; }
 .category-rail { flex: 0 0 calc(50% - var(--cat-slot-w) / 2); }
 .category-slot { flex: 0 0 var(--cat-slot-w); height: 100%; min-width: 0; display: flex; align-items: flex-start; justify-content: center; padding: 0; border: 0; background: none; scroll-snap-align: center; cursor: pointer; }
@@ -111,7 +128,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .catalog-product-stage { padding-inline: 1rem; }
 }
 @media (max-height: 640px) {
-  :root { --cat-h: 112px; --cat-groups-h: 24px; --cat-slot-w: 62px; --cat-badge: 38px; --can-h: clamp(140px, 27dvh, 200px); --can-w: clamp(109px, 20.8dvh, 154px); --stage-top: 4px; }
+  :root { --cat-h: 120px; --cat-groups-h: 24px; --cat-slot-w: 62px; --cat-badge: 38px; --can-h: clamp(140px, 27dvh, 200px); --can-w: clamp(109px, 20.8dvh, 154px); --stage-top: 4px; }
   .catalog-product-stage h1 { font-size: clamp(1.25rem, 5vw, 1.55rem); }
   .catalog-product-glow { height: 42dvh; width: 42dvh; }
 }
