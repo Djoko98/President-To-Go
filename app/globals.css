@@ -51,13 +51,16 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .home-catalog { height: calc(100dvh - var(--header-h)); padding-bottom: calc(clamp(84px, 10.5dvh, 100px) + var(--safe-bottom)); overscroll-behavior: none; }
 .catalog-categories { height: var(--cat-h); display: flex; flex-direction: column; overflow: hidden; padding-bottom: clamp(4px, .8dvh, 10px); }
 
-/* Grupe: piće ↔ hrana — panel prati isti luk kao i točak */
-.category-groups { flex: 0 0 auto; display: grid; place-items: start center; filter: drop-shadow(0 8px 18px rgba(21,21,21,.09)); }
-.category-groups-track { display: inline-flex; align-items: flex-start; gap: 2px; padding: 6px; height: calc(var(--cat-groups-t) + var(--groups-sag, 0px)); border-radius: 999px; background: rgba(255,255,255,.74); backdrop-filter: blur(12px); clip-path: var(--groups-clip, none); }
-.category-group { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: calc(var(--cat-groups-t) - 12px); padding-inline: clamp(10px, 1.6dvh, 14px); border: 0; border-radius: 999px; background: none; color: var(--muted); font-size: clamp(10px, 1.4dvh, 12px); font-weight: 800; cursor: pointer; transition: color .3s ease; }
+/* Grupe: piće ↔ hrana — podloga, oznaka i natpisi leže na istom luku kao točak */
+.category-groups { flex: 0 0 auto; display: grid; place-items: start center; }
+/* Fiksna rezerva za savijanje luka — visina ne sme da zavisi od merenja, inače se vrti u krug sa ResizeObserver-om. */
+.category-groups-track { position: relative; display: inline-flex; align-items: flex-start; gap: 2px; padding: 6px; height: calc(var(--cat-groups-t) + 8px); }
+.category-groups-shape { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+.category-groups-plate { fill: rgba(255,255,255,.86); stroke: rgba(21,21,21,.13); stroke-width: 1; }
+.category-groups-thumb { fill: var(--foreground); transition: d .32s cubic-bezier(.4, 0, .2, 1); }
+.category-group { position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: calc(var(--cat-groups-t) - 12px); padding-inline: clamp(10px, 1.6dvh, 14px); border: 0; background: none; color: var(--muted); font-size: clamp(10px, 1.4dvh, 12px); font-weight: 800; cursor: pointer; transition: color .3s ease; transform: translateY(var(--group-sag, 0px)) rotate(var(--group-tilt, 0deg)); }
 .category-group.is-active { color: #fff; }
-.category-group-pill { position: absolute; inset: 0; border-radius: 999px; background: var(--foreground); box-shadow: 0 6px 16px rgba(21,21,21,.26); }
-.category-group-icon { position: relative; z-index: 1; width: clamp(11px, 1.6dvh, 14px); height: clamp(11px, 1.6dvh, 14px); }
+.category-group-icon { width: clamp(11px, 1.6dvh, 14px); height: clamp(11px, 1.6dvh, 14px); }
 
 /* Polukružni točak kategorija — pozadina i linija su koncentrični krugovi sa stavkama */
 .category-arc-band, .category-arc-line, .category-arc-marker { position: absolute; left: 50%; translate: -50% 0; pointer-events: none; }

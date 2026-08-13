@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
 import { CATEGORY_GROUPS, CategoryGroupIcon, CategoryIcon, sortCategories } from "@/lib/categories";
 import type { Category, CategoryGroup } from "@/types/domain";
 
 type Slot = { key: string; category: Category | null };
+type GroupsShape = { plate: string; thumbs: Record<string, string> };
 type Geometry = { arcs: HTMLElement[]; labels: Array<HTMLElement | null>; ids: Array<string | null>; centers: number[]; span: number; radius: number };
 
 const MIN_DROP = 16;
@@ -14,22 +15,37 @@ const SETTLE_MS = 130;
 const BAND_GAP = 6;
 const LINE_GAP = 7;
 
-/** „Piće/Hrana" dobija oblik luka koncentričnog sa točkom: dve kružne ivice i zaobljeni krajevi. */
-function shapeGroups(nav: HTMLElement, centerY: number) {
-  const groups = nav.querySelector<HTMLElement>("[data-groups]");
-  if (!groups?.offsetWidth) return;
-  const thickness = Number.parseFloat(getComputedStyle(nav).getPropertyValue("--cat-groups-t")) || 34;
-  const width = groups.offsetWidth;
+/** Kapsula čije obe ivice leže na kružnici točka, sa zaobljenim krajevima. */
+function arcCapsule(from: number, to: number, thickness: number, radius: number, centerX: number, centerY: number) {
   const cap = thickness / 2;
-  const radius = Math.max(120, centerY - groups.offsetTop - cap);
-  const angleAt = (x: number) => Math.asin(Math.max(-1, Math.min(1, (x - width / 2) / radius)));
-  const point = (r: number, angle: number) => `${(width / 2 + r * Math.sin(angle)).toFixed(2)} ${(cap + radius - r * Math.cos(angle)).toFixed(2)}`;
-  const start = angleAt(cap);
-  const end = angleAt(width - cap);
+  const angleAt = (x: number) => Math.asin(Math.max(-1, Math.min(1, (x - centerX) / radius)));
+  const point = (r: number, angle: number) => `${(centerX + r * Math.sin(angle)).toFixed(2)} ${(centerY - r * Math.cos(angle)).toFixed(2)}`;
+  const start = angleAt(from + cap);
+  const end = angleAt(to - cap);
   const outer = radius + cap;
   const inner = radius - cap;
-  nav.style.setProperty("--groups-sag", `${Math.ceil(radius - radius * Math.cos(end))}px`);
-  nav.style.setProperty("--groups-clip", `path("M ${point(outer, start)} A ${outer} ${outer} 0 0 1 ${point(outer, end)} A ${cap} ${cap} 0 0 1 ${point(inner, end)} A ${inner} ${inner} 0 0 0 ${point(inner, start)} A ${cap} ${cap} 0 0 1 ${point(outer, start)} Z")`);
+  return `M ${point(outer, start)} A ${outer} ${outer} 0 0 1 ${point(outer, end)} A ${cap} ${cap} 0 0 1 ${point(inner, end)} A ${inner} ${inner} 0 0 0 ${point(inner, start)} A ${cap} ${cap} 0 0 1 ${point(outer, start)} Z`;
+}
+
+/** „Piće/Hrana" prati isti luk kao točak: podloga, oznaka i natpisi leže na kružnici. */
+function shapeGroups(nav: HTMLElement, centerY: number): GroupsShape | null {
+  const groups = nav.querySelector<HTMLElement>("[data-groups]");
+  if (!groups?.offsetWidth) return null;
+  const thickness = Number.parseFloat(getComputedStyle(nav).getPropertyValue("--cat-groups-t")) || 34;
+  const width = groups.offsetWidth;
+  const padding = Number.parseFloat(getComputedStyle(groups).paddingTop) || 6;
+  const centerX = width / 2;
+  const radius = Math.max(120, centerY - groups.offsetTop - thickness / 2);
+  const localCenterY = thickness / 2 + radius;
+  const thumbs: Record<string, string> = {};
+  for (const button of groups.querySelectorAll<HTMLElement>("[data-group-key]")) {
+    const left = button.offsetLeft;
+    const middle = left + button.offsetWidth / 2 - centerX;
+    thumbs[button.dataset.groupKey ?? ""] = arcCapsule(left, left + button.offsetWidth, thickness - padding * 2, radius, centerX, localCenterY);
+    button.style.setProperty("--group-sag", `${(radius - Math.sqrt(Math.max(0, radius * radius - middle * middle))).toFixed(2)}px`);
+    button.style.setProperty("--group-tilt", `${((Math.asin(middle / radius) * 180) / Math.PI).toFixed(2)}deg`);
+  }
+  return { plate: arcCapsule(0, width, thickness, radius, centerX, localCenterY), thumbs };
 }
 
 function WheelSlot({ category, centered, active, onSelect }: { category: Category; centered: boolean; active: boolean; onSelect: (category: Category) => void }) {
@@ -45,14 +61,15 @@ function WheelSlot({ category, centered, active, onSelect }: { category: Categor
 
 export function CategorySelector({ categories, activeId, onChange }: { categories: Category[]; activeId: string; onChange: (category: Category) => void }) {
   const reduceMotion = useReducedMotion();
-  const spring = reduceMotion ? { duration: 0 } : { type: "spring" as const, stiffness: 420, damping: 34 };
   const navRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const geometryRef = useRef<Geometry | null>(null);
   const frameRef = useRef(0);
   const settleRef = useRef(0);
   const centeredRef = useRef(activeId);
+  const committedRef = useRef("");
   const [centeredId, setCenteredId] = useState(activeId);
+  const [groupsShape, setGroupsShape] = useState<GroupsShape | null>(null);
 
   const ordered = useMemo(() => sortCategories(categories), [categories]);
   const groups = useMemo(() => CATEGORY_GROUPS.filter((group) => ordered.some((category) => category.group_key === group.key)), [ordered]);
@@ -87,7 +104,8 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
     // Pozadina i linija se stapaju sa stranicom pre nego što ih donja ivica navigacije preseče.
     nav.style.setProperty("--arc-band-fade", `${Math.max(48, Math.round(nav.clientHeight - track.offsetTop + BAND_GAP))}px`);
     nav.style.setProperty("--arc-line-fade", `${Math.max(24, Math.round(nav.clientHeight - track.offsetTop - height - LINE_GAP))}px`);
-    shapeGroups(nav, centerY);
+    const shape = shapeGroups(nav, centerY);
+    setGroupsShape((previous) => (previous && shape && previous.plate === shape.plate ? previous : shape));
     geometryRef.current = {
       arcs,
       labels: elements.map((slot) => slot.querySelector<HTMLElement>("[data-arc-label]")),
@@ -126,26 +144,32 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
   const centerOn = useCallback((id: string, behavior: ScrollBehavior) => {
     const track = trackRef.current;
     const geometry = geometryRef.current;
-    if (!track || !geometry) return;
+    if (!track || !geometry) return false;
     const center = geometry.centers[geometry.ids.indexOf(id)];
-    if (center === undefined) return;
+    if (center === undefined) return false;
     track.scrollTo({ left: center - track.clientWidth / 2, behavior });
+    return true;
   }, []);
 
+  // Ključ umesto niza: osvežavanje kataloga sa istim kategorijama ne sme da pomeri točak u toku skrola.
+  const slotsKey = slots.map((slot) => slot.key).join("|");
   useEffect(() => {
     measure();
     centerOn(latest.current.activeId, "auto");
     paint();
-  }, [centerOn, measure, paint, slots]);
+  }, [centerOn, measure, paint, slotsKey]);
 
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
     const settle = () => {
       const { activeId: selected, onChange: change, byId: map } = latest.current;
+      settleRef.current = 0;
       const id = centeredRef.current;
       const category = id && id !== selected ? map.get(id) : undefined;
-      if (category) change(category);
+      if (!category) return;
+      committedRef.current = category.id;
+      change(category);
     };
     const onScroll = () => {
       if (!frameRef.current) frameRef.current = requestAnimationFrame(() => { frameRef.current = 0; paint(); });
@@ -157,7 +181,12 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
       event.preventDefault();
       track.scrollLeft += event.deltaY;
     };
-    const observer = new ResizeObserver(() => { measure(); centerOn(centeredRef.current, "auto"); paint(); });
+    const observer = new ResizeObserver(() => {
+      measure();
+      // Ne diramo poziciju dok korisnik skroluje — inače se točak trza usred zamaha.
+      if (!settleRef.current) centerOn(centeredRef.current, "auto");
+      paint();
+    });
     observer.observe(track);
     track.addEventListener("scroll", onScroll, { passive: true });
     track.addEventListener("wheel", onWheel, { passive: false });
@@ -171,11 +200,14 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
   }, [centerOn, measure, paint]);
 
   useEffect(() => {
-    if (activeId && activeId !== centeredRef.current) centerOn(activeId, reduceMotion ? "auto" : "smooth");
+    // Izbor koji je potekao iz samog točka (skrol ili klik) je već na mestu — ne centriramo ponovo.
+    if (activeId === committedRef.current || !activeId || activeId === centeredRef.current) return;
+    centerOn(activeId, reduceMotion ? "auto" : "smooth");
   }, [activeId, centerOn, reduceMotion]);
 
   const select = (category: Category) => {
-    centerOn(category.id, reduceMotion ? "auto" : "smooth");
+    // Oznaka „sami smo pomerili točak" važi samo ako je centriranje stvarno prošlo.
+    if (centerOn(category.id, reduceMotion ? "auto" : "smooth")) committedRef.current = category.id;
     if (category.id !== activeId) onChange(category);
   };
   const activeGroup: CategoryGroup = ordered.find((category) => category.id === centeredId)?.group_key ?? ordered[0]?.group_key ?? "drinks";
@@ -185,14 +217,17 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
       {groups.length > 1 ? (
         <div className="category-groups">
           <div data-groups className="category-groups-track" role="group" aria-label="Grupe kategorija">
+            <svg aria-hidden className="category-groups-shape">
+              <path className="category-groups-plate" d={groupsShape?.plate ?? ""} />
+              <path className="category-groups-thumb" d={groupsShape?.thumbs[activeGroup] ?? ""} />
+            </svg>
             {groups.map((group) => {
               const isActive = group.key === activeGroup;
               const first = ordered.find((category) => category.group_key === group.key);
               return (
-                <button key={group.key} type="button" aria-pressed={isActive} onClick={() => first && select(first)} className={`category-group${isActive ? " is-active" : ""}`}>
-                  {isActive ? <motion.span aria-hidden layoutId="category-group-pill" transition={spring} className="category-group-pill" /> : null}
+                <button key={group.key} data-group-key={group.key} type="button" aria-pressed={isActive} onClick={() => first && select(first)} className={`category-group${isActive ? " is-active" : ""}`}>
                   <CategoryGroupIcon group={group.key} className="category-group-icon" />
-                  <span className="relative z-10">{group.label}</span>
+                  <span>{group.label}</span>
                 </button>
               );
             })}

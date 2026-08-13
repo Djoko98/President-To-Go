@@ -21,6 +21,8 @@ test("točak kategorija razdvaja piće i hranu", async ({ page }) => {
   await page.goto("/");
   const drinks = page.getByRole("button", { name: "Piće", exact: true });
   const food = page.getByRole("button", { name: "Hrana", exact: true });
+  // Oblik panela crta klijent posle merenja — dokaz da je točak hidriran i spreman.
+  await expect(page.locator(".category-groups-plate")).toHaveAttribute("d", /^M /);
   await expect(drinks).toHaveAttribute("aria-pressed", "true");
 
   await food.click();

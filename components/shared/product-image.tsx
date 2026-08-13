@@ -13,5 +13,6 @@ export function ProductImage({ src, alt, accent, className = "" }: { src?: strin
       </span>
     );
   }
-  return <Image src={src} alt={alt} fill sizes="(max-width: 768px) 72vw, 420px" className={`object-contain ${className}`} priority={alt === "Lubenito"} />;
+  // draggable={false} — nativni drag slike bi poslao pointercancel i prekinuo swipe.
+  return <Image src={src} alt={alt} fill draggable={false} sizes="(max-width: 768px) 72vw, 420px" className={`object-contain ${className}`} priority={alt === "Lubenito"} />;
 }

@@ -55,6 +55,8 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
   const [quantity, setQuantity] = useState(1);
   const add = useCartStore((state) => state.add);
   const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const pointerLast = useRef<{ x: number; y: number } | null>(null);
+  const swipedRef = useRef(false);
   const imageRef = useRef<HTMLDivElement>(null);
   const [flights, setFlights] = useState<CartFlight[]>([]);
 
@@ -90,17 +92,32 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
     setActiveCategoryId(next.id); setProductIndex(0); setQuantity(1);
     router.replace(`/?category=${next.slug}`, { scroll: false });
   };
-  const onPointerUp = (event: React.PointerEvent) => {
-    const start = pointerStart.current; pointerStart.current = null;
-    if (!start) return;
-    const dx = event.clientX - start.x; const dy = event.clientY - start.y;
-    if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+  // Gest se prati na celoj sceni (slika, nazivi, bočne sličice) i završava se preko prozora,
+  // pa swipe radi i kad prst krene sa elementa koji ima svoj klik.
+  const finishSwipe = () => {
+    const start = pointerStart.current; const last = pointerLast.current;
+    pointerStart.current = null; pointerLast.current = null;
+    if (!start || !last) return;
+    const dx = last.x - start.x; const dy = last.y - start.y;
+    if (Math.abs(dx) < 44 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+    swipedRef.current = true;
     go(productIndex + (dx < 0 ? 1 : -1));
   };
   const swipeHandlers = {
-    onPointerDown: (event: React.PointerEvent) => { pointerStart.current = { x: event.clientX, y: event.clientY }; event.currentTarget.setPointerCapture(event.pointerId); },
-    onPointerUp,
-    onPointerCancel: () => { pointerStart.current = null; },
+    onPointerDown: (event: React.PointerEvent) => {
+      pointerStart.current = { x: event.clientX, y: event.clientY };
+      pointerLast.current = { x: event.clientX, y: event.clientY };
+      swipedRef.current = false;
+      const end = () => { window.removeEventListener("pointerup", end); window.removeEventListener("pointercancel", end); finishSwipe(); };
+      window.addEventListener("pointerup", end);
+      window.addEventListener("pointercancel", end);
+    },
+    onPointerMove: (event: React.PointerEvent) => { if (pointerStart.current) pointerLast.current = { x: event.clientX, y: event.clientY }; },
+  };
+  /** Posle swipe-a preskačemo klik koji browser pošalje na dugme ispod prsta. */
+  const afterSwipe = (action: () => void) => () => {
+    if (swipedRef.current) { swipedRef.current = false; return; }
+    action();
   };
   const addToCart = () => {
     if (!product || !product.is_available) return;
@@ -127,27 +144,26 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
           <CatalogEmptyState category={activeCategory} suggestion={suggestion} onSuggestion={changeCategory} />
         </section>
       ) : (
-        <section aria-label={`${activeCategory.name}: ${product.name}`} className="catalog-product-stage relative mx-auto flex w-full max-w-[820px] flex-col items-center justify-start px-5">
-          <div aria-hidden className="absolute inset-0 z-[3] touch-none" {...swipeHandlers} />
+        <section {...swipeHandlers} aria-label={`${activeCategory.name}: ${product.name}`} className="catalog-product-stage relative mx-auto flex w-full max-w-[820px] touch-none flex-col items-center justify-start px-5">
           <div aria-hidden className="pointer-events-none absolute left-1/2 top-[5%] z-0 -translate-x-1/2">
             <div className="catalog-product-glow rounded-full transition-all duration-700" style={{ background: `radial-gradient(circle at center, ${product.accent_color} 0%, ${product.accent_color} 22%, transparent 70%)`, opacity: 0.68 }} />
-            <motion.div className="catalog-ring rounded-full border border-dashed" style={{ borderColor: product.accent_color }} animate={reduceMotion ? undefined : { rotate: 360 }} transition={{ repeat: Infinity, duration: 70, ease: "linear" }} />
+            <motion.div className="catalog-ring rounded-full border border-dashed" style={{ borderColor: `color-mix(in srgb, ${product.accent_color} 45%, #6f6f66)` }} animate={reduceMotion ? undefined : { rotate: 360 }} transition={{ repeat: Infinity, duration: 70, ease: "linear" }} />
           </div>
           {prevProduct ? (
-            <button type="button" onClick={() => go(productIndex - 1)} aria-label={`Prethodni proizvod: ${prevProduct.name}`} className="catalog-peek catalog-peek-left">
+            <button type="button" onClick={afterSwipe(() => go(productIndex - 1))} aria-label={`Prethodni proizvod: ${prevProduct.name}`} className="catalog-peek catalog-peek-left">
               <motion.div key={prevProduct.id} initial={reduceMotion ? false : { opacity: 0, scale: 0.88 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3 }} className="relative h-full w-full">
                 <ProductImage src={prevProduct.image_url} alt="" />
               </motion.div>
             </button>
           ) : null}
           {nextProduct ? (
-            <button type="button" onClick={() => go(productIndex + 1)} aria-label={`Sledeći proizvod: ${nextProduct.name}`} className="catalog-peek catalog-peek-right">
+            <button type="button" onClick={afterSwipe(() => go(productIndex + 1))} aria-label={`Sledeći proizvod: ${nextProduct.name}`} className="catalog-peek catalog-peek-right">
               <motion.div key={nextProduct.id} initial={reduceMotion ? false : { opacity: 0, scale: 0.88 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3 }} className="relative h-full w-full">
                 <ProductImage src={nextProduct.image_url} alt="" />
               </motion.div>
             </button>
           ) : null}
-          <div ref={imageRef} className="catalog-product-image relative z-10 cursor-grab touch-none select-none active:cursor-grabbing" {...swipeHandlers}>
+          <div ref={imageRef} className="catalog-product-image relative z-10 cursor-grab select-none active:cursor-grabbing">
             <AnimatePresence initial={false} custom={direction}>
               <motion.div key={product.id} custom={direction} variants={canVariants} initial={reduceMotion ? false : "enter"} animate="center" exit={reduceMotion ? { opacity: 0 } : "exit"} transition={reduceMotion ? { duration: 0.15 } : { type: "spring", stiffness: 320, damping: 30, mass: 0.92 }} className="absolute inset-0">
                 <div aria-hidden className="catalog-can-shadow" />
@@ -175,7 +191,7 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
               </div>
             </motion.div>
           </AnimatePresence>
-          <ProductDots products={products} index={productIndex} onSelect={go} />
+          <ProductDots products={products} index={productIndex} onSelect={(dot) => afterSwipe(() => go(dot))()} />
           </div>
         </section>
       )}
