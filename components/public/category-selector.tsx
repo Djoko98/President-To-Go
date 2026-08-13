@@ -14,6 +14,24 @@ const SETTLE_MS = 130;
 const BAND_GAP = 6;
 const LINE_GAP = 7;
 
+/** „Piće/Hrana" dobija oblik luka koncentričnog sa točkom: dve kružne ivice i zaobljeni krajevi. */
+function shapeGroups(nav: HTMLElement, centerY: number) {
+  const groups = nav.querySelector<HTMLElement>("[data-groups]");
+  if (!groups?.offsetWidth) return;
+  const thickness = Number.parseFloat(getComputedStyle(nav).getPropertyValue("--cat-groups-t")) || 34;
+  const width = groups.offsetWidth;
+  const cap = thickness / 2;
+  const radius = Math.max(120, centerY - groups.offsetTop - cap);
+  const angleAt = (x: number) => Math.asin(Math.max(-1, Math.min(1, (x - width / 2) / radius)));
+  const point = (r: number, angle: number) => `${(width / 2 + r * Math.sin(angle)).toFixed(2)} ${(cap + radius - r * Math.cos(angle)).toFixed(2)}`;
+  const start = angleAt(cap);
+  const end = angleAt(width - cap);
+  const outer = radius + cap;
+  const inner = radius - cap;
+  nav.style.setProperty("--groups-sag", `${Math.ceil(radius - radius * Math.cos(end))}px`);
+  nav.style.setProperty("--groups-clip", `path("M ${point(outer, start)} A ${outer} ${outer} 0 0 1 ${point(outer, end)} A ${cap} ${cap} 0 0 1 ${point(inner, end)} A ${inner} ${inner} 0 0 0 ${point(inner, start)} A ${cap} ${cap} 0 0 1 ${point(outer, start)} Z")`);
+}
+
 function WheelSlot({ category, centered, active, onSelect }: { category: Category; centered: boolean; active: boolean; onSelect: (category: Category) => void }) {
   return (
     <button data-slot data-category-id={category.id} data-active={centered} type="button" aria-pressed={active} onClick={() => onSelect(category)} className="category-slot touch-target">
@@ -62,12 +80,14 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
     const drop = Math.min(MAX_DROP, Math.max(MIN_DROP, track.clientHeight - height - 2));
     const radius = (span * span + drop * drop) / (2 * drop);
     // Pozadina točka i linija ispod naziva su koncentrični krugovi sa istim centrom kao i stavke.
-    nav.style.setProperty("--arc-cy", `${Math.round(track.offsetTop + height / 2 + radius)}px`);
+    const centerY = track.offsetTop + height / 2 + radius;
+    nav.style.setProperty("--arc-cy", `${Math.round(centerY)}px`);
     nav.style.setProperty("--arc-band-r", `${Math.round(radius + height / 2 + BAND_GAP)}px`);
     nav.style.setProperty("--arc-line-r", `${Math.round(radius - height / 2 - LINE_GAP)}px`);
     // Pozadina i linija se stapaju sa stranicom pre nego što ih donja ivica navigacije preseče.
     nav.style.setProperty("--arc-band-fade", `${Math.max(48, Math.round(nav.clientHeight - track.offsetTop + BAND_GAP))}px`);
     nav.style.setProperty("--arc-line-fade", `${Math.max(24, Math.round(nav.clientHeight - track.offsetTop - height - LINE_GAP))}px`);
+    shapeGroups(nav, centerY);
     geometryRef.current = {
       arcs,
       labels: elements.map((slot) => slot.querySelector<HTMLElement>("[data-arc-label]")),
@@ -90,11 +110,10 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
       const distance = center - viewCenter;
       const clamped = Math.max(-geometry.span, Math.min(geometry.span, distance));
       const drop = geometry.radius - Math.sqrt(Math.max(0, geometry.radius * geometry.radius - clamped * clamped));
-      const angle = (Math.asin(clamped / geometry.radius) * 180) / Math.PI;
       const ratio = Math.min(1, Math.abs(distance) / geometry.span);
       const arc = geometry.arcs[index];
       if (!arc) return;
-      arc.style.transform = `translate3d(0,${drop.toFixed(2)}px,0) rotate(${angle.toFixed(2)}deg) scale(${(1 - 0.2 * ratio).toFixed(3)})`;
+      arc.style.transform = `translate3d(0,${drop.toFixed(2)}px,0) scale(${(1 - 0.2 * ratio).toFixed(3)})`;
       arc.style.opacity = (1 - 0.62 * ratio).toFixed(3);
       const label = geometry.labels[index];
       if (label) label.style.opacity = Math.max(0, 1 - 1.25 * ratio).toFixed(3);

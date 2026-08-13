@@ -10,9 +10,34 @@ import { FloatingAddBar } from "@/components/public/floating-add-bar";
 import { ProductImage } from "@/components/shared/product-image";
 import { useCartStore } from "@/features/cart/store";
 import { formatMoney } from "@/lib/money";
-import type { CatalogData, Category } from "@/types/domain";
+import type { CatalogData, Category, Product } from "@/types/domain";
 
 type CartFlight = { id: number; src: string; x: number; y: number; w: number; h: number; dx: number; dy: number; scale: number };
+
+const DOT_SLOT = 44;
+const DOT_WINDOW = 5;
+
+/** Prikazuje najviše pet tačkica; lista duža od toga klizi horizontalno oko aktivne. */
+function ProductDots({ products, index, onSelect }: { products: Product[]; index: number; onSelect: (index: number) => void }) {
+  const visible = Math.min(DOT_WINDOW, products.length);
+  const offset = Math.max(0, Math.min(index - Math.floor(DOT_WINDOW / 2), products.length - visible));
+  return (
+    <div className="catalog-dots" style={{ width: visible * DOT_SLOT }} aria-label={`Proizvod ${index + 1} od ${products.length}`}>
+      <div className="catalog-dots-track" style={{ transform: `translateX(${-offset * DOT_SLOT}px)` }}>
+        {products.map((item, dot) => {
+          const active = dot === index;
+          const inside = dot >= offset && dot < offset + visible;
+          const edge = inside && ((dot === offset && offset > 0) || (dot === offset + visible - 1 && offset + visible < products.length));
+          return (
+            <button key={item.id} type="button" tabIndex={inside ? undefined : -1} aria-hidden={inside ? undefined : true} onClick={() => onSelect(dot)} aria-label={`Prikaži ${item.name}`} aria-current={active} className="catalog-dot touch-target group grid place-items-center">
+              <span className={`block h-2 rounded-full transition-all duration-300 ${active ? "w-6 bg-neutral-900" : "w-2 bg-neutral-300 group-hover:bg-neutral-400"} ${edge ? "scale-50" : ""}`} />
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 const canVariants = {
   enter: (direction: number) => ({ opacity: 0, x: direction * 92, scale: 0.82, rotate: direction * 8 }),
@@ -108,13 +133,6 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
             <div className="catalog-product-glow rounded-full transition-all duration-700" style={{ background: `radial-gradient(circle at center, ${product.accent_color} 0%, ${product.accent_color} 22%, transparent 70%)`, opacity: 0.68 }} />
             <motion.div className="catalog-ring rounded-full border border-dashed" style={{ borderColor: product.accent_color }} animate={reduceMotion ? undefined : { rotate: 360 }} transition={{ repeat: Infinity, duration: 70, ease: "linear" }} />
           </div>
-          <div aria-hidden className="catalog-ghost-name pointer-events-none absolute inset-x-0 z-0 flex justify-center">
-            <AnimatePresence initial={false} custom={direction} mode="popLayout">
-              <motion.span key={product.id} custom={direction} initial={reduceMotion ? false : { opacity: 0, x: direction * 130 }} animate={{ opacity: 0.17, x: 0 }} exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: direction * -130 }} transition={{ duration: 0.5, ease: "easeOut" }} style={{ color: product.accent_color }}>
-                {product.name}
-              </motion.span>
-            </AnimatePresence>
-          </div>
           {prevProduct ? (
             <button type="button" onClick={() => go(productIndex - 1)} aria-label={`Prethodni proizvod: ${prevProduct.name}`} className="catalog-peek catalog-peek-left">
               <motion.div key={prevProduct.id} initial={reduceMotion ? false : { opacity: 0, scale: 0.88 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3 }} className="relative h-full w-full">
@@ -157,16 +175,7 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
               </div>
             </motion.div>
           </AnimatePresence>
-          <div className="mt-1 flex items-center" aria-label={`Proizvod ${productIndex + 1} od ${products.length}`}>
-            {products.map((item, index) => {
-              const active = index === productIndex;
-              return (
-                <button key={item.id} type="button" onClick={() => go(index)} aria-label={`Prikaži ${item.name}`} aria-current={active} className="touch-target group grid place-items-center">
-                  <span className={`block h-2 rounded-full transition-all duration-300 ${active ? "w-6 bg-neutral-900" : "w-2 bg-neutral-300 group-hover:bg-neutral-400"}`} />
-                </button>
-              );
-            })}
-          </div>
+          <ProductDots products={products} index={productIndex} onSelect={go} />
           </div>
         </section>
       )}
