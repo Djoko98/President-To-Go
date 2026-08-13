@@ -4,13 +4,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Clock3 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { CatalogEmptyState } from "@/components/public/catalog-empty-state";
 import { CategorySelector } from "@/components/public/category-selector";
 import { FloatingAddBar } from "@/components/public/floating-add-bar";
 import { ProductImage } from "@/components/shared/product-image";
 import { useCartStore } from "@/features/cart/store";
-import { PRODUCT_FALLBACK_IMAGE } from "@/lib/catalog-fallback";
 import { formatMoney } from "@/lib/money";
-import type { CatalogData } from "@/types/domain";
+import type { CatalogData, Category } from "@/types/domain";
 
 type CartFlight = { id: number; src: string; x: number; y: number; w: number; h: number; dx: number; dy: number; scale: number };
 
@@ -60,7 +60,8 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
   }
 
   const activeCategory = catalog.categories.find((item) => item.id === activeCategoryId) ?? category;
-  const changeCategory = (next: typeof activeCategory) => {
+  const suggestion = catalog.categories.find((item) => item.id !== activeCategory.id && catalog.products.some((entry) => entry.category_id === item.id));
+  const changeCategory = (next: Category) => {
     setActiveCategoryId(next.id); setProductIndex(0); setQuantity(1);
     router.replace(`/?category=${next.slug}`, { scroll: false });
   };
@@ -81,10 +82,11 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
     add(product, quantity);
     const source = imageRef.current?.getBoundingClientRect();
     const target = document.getElementById("cart-fly-target")?.getBoundingClientRect();
-    if (!source || !target || reduceMotion) { window.dispatchEvent(new CustomEvent("cart:bump")); return; }
+    const src = product.image_url;
+    if (!source || !target || reduceMotion || !src) { window.dispatchEvent(new CustomEvent("cart:bump")); return; }
     setFlights((prev) => [...prev, {
       id: Date.now() + Math.random(),
-      src: product.image_url || PRODUCT_FALLBACK_IMAGE,
+      src,
       x: source.left, y: source.top, w: source.width, h: source.height,
       dx: (target.left + target.width / 2) - (source.left + source.width / 2),
       dy: (target.top + target.height / 2) - (source.top + source.height / 2),
@@ -96,11 +98,8 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
     <main className="home-catalog relative overflow-hidden">
       <CategorySelector categories={catalog.categories} activeId={activeCategoryId} onChange={changeCategory} />
       {!product ? (
-        <section className="catalog-product-stage relative mx-auto grid w-full max-w-[820px] place-items-center px-5">
-          <div className="text-center">
-            <h1 className="text-xl font-bold sm:text-2xl">Nema proizvoda u ovoj kategoriji</h1>
-            <p className="mt-2 text-sm text-neutral-500">Izaberi drugu kategoriju iznad.</p>
-          </div>
+        <section aria-label={`${activeCategory.name}: nema proizvoda`} className="catalog-product-stage relative mx-auto grid w-full max-w-[820px] place-items-center px-5">
+          <CatalogEmptyState category={activeCategory} suggestion={suggestion} onSuggestion={changeCategory} />
         </section>
       ) : (
         <section aria-label={`${activeCategory.name}: ${product.name}`} className="catalog-product-stage relative mx-auto flex w-full max-w-[820px] flex-col items-center justify-start px-5">
@@ -135,7 +134,7 @@ export function CatalogExperience({ catalog, initialCategory }: { catalog: Catal
               <motion.div key={product.id} custom={direction} variants={canVariants} initial={reduceMotion ? false : "enter"} animate="center" exit={reduceMotion ? { opacity: 0 } : "exit"} transition={reduceMotion ? { duration: 0.15 } : { type: "spring", stiffness: 320, damping: 30, mass: 0.92 }} className="absolute inset-0">
                 <div aria-hidden className="catalog-can-shadow" />
                 <motion.div animate={reduceMotion || !product.is_available ? undefined : { y: [0, -7, 0] }} transition={{ repeat: Infinity, duration: 4.6, ease: "easeInOut" }} className={`absolute inset-0 ${product.is_available ? "" : "opacity-45 grayscale"}`}>
-                  <ProductImage src={product.image_url} alt={product.name} />
+                  <ProductImage src={product.image_url} alt={product.name} accent={product.accent_color} />
                 </motion.div>
                 {!product.is_available ? <span className="absolute left-1/2 top-1/2 z-20 w-max -translate-x-1/2 -translate-y-1/2 -rotate-6 rounded-full bg-neutral-950/90 px-4 py-1.5 text-sm font-extrabold uppercase tracking-wide text-white shadow-lg">Rasprodato</span> : null}
               </motion.div>

@@ -1,4 +1,4 @@
-import type { AdminRole, OrderStatus } from "@/types/domain";
+import type { AdminRole, CategoryGroup, OrderStatus } from "@/types/domain";
 
 type GenericTable<Row, Insert = Partial<Row>, Update = Partial<Row>> = {
   Row: Row;
@@ -13,7 +13,7 @@ export interface Database {
   public: {
     Tables: {
       categories: GenericTable<{
-        id: string; name: string; slug: string; image_url: string | null; position: number; is_active: boolean; created_at: string; updated_at: string;
+        id: string; name: string; slug: string; image_url: string | null; group_key: CategoryGroup; position: number; is_active: boolean; created_at: string; updated_at: string;
       }>;
       products: GenericTable<{
         id: string; category_id: string; name: string; slug: string; description: string; ingredients: string; price: number; image_url: string | null; accent_color: string; contains_alcohol: boolean; preparation_minutes: number; max_quantity_per_order: number; position: number; is_available: boolean; is_active: boolean; created_at: string; updated_at: string;

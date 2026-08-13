@@ -1,10 +1,21 @@
 import type { CatalogData, Category, Product } from "@/types/domain";
 
 const image = "/images/products/lubenito.png";
+const category = (id: string, name: string, slug: string, group_key: Category["group_key"], position: number): Category => ({ id, name, slug, group_key, image_url: null, position, is_active: true });
+
 export const fallbackCategories: Category[] = [
-  { id: "cat-kokteli", name: "Kokteli", slug: "kokteli", image_url: image, position: 0, is_active: true },
-  { id: "cat-kafe", name: "Kafe", slug: "kafe", image_url: image, position: 1, is_active: true },
-  { id: "cat-vocni", name: "Voćni napici", slug: "vocni-napici", image_url: image, position: 2, is_active: true },
+  category("cat-kokteli", "Kokteli", "kokteli", "drinks", 0),
+  category("cat-kafe", "Kafe", "kafe", "drinks", 1),
+  category("cat-vocni", "Voćni napici", "vocni-napici", "drinks", 2),
+  category("cat-dorucak", "Doručak", "dorucak", "food", 3),
+  category("cat-posno", "Posno", "posno", "food", 4),
+  category("cat-paste", "Paste", "paste", "food", 5),
+  category("cat-rizoto", "Rižoto", "rizoto", "food", 6),
+  category("cat-pice", "Pice", "pice", "food", 7),
+  category("cat-rostilj", "Sa roštilja", "sa-rostilja", "food", 8),
+  category("cat-glavna-jela", "Glavna jela", "glavna-jela", "food", 9),
+  category("cat-obrok-salate", "Obrok salate", "obrok-salate", "food", 10),
+  category("cat-dezerti", "Dezerti", "dezerti", "food", 11),
 ];
 
 const product = (id: string, category_id: string, name: string, slug: string, ingredients: string, price: number, position: number, accent_color: string, contains_alcohol = false): Product => ({

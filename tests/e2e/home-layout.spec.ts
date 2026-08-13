@@ -6,15 +6,32 @@ test("početni katalog staje u vidljivi ekran bez skrolovanja", async ({ page })
   const dimensions = await page.evaluate(() => ({ viewport: window.innerHeight, page: document.documentElement.scrollHeight }));
   expect(dimensions.page).toBeLessThanOrEqual(dimensions.viewport + 1);
   const categoriesFit = await page.evaluate(() => {
-    const nav = document.querySelector<HTMLElement>("[aria-label='Kategorije napitaka']")?.getBoundingClientRect();
-    const labels = [...document.querySelectorAll<HTMLElement>("[aria-label='Kategorije napitaka'] button > span:nth-child(2)")].map((label) => label.getBoundingClientRect());
-    return !!nav && labels.every((label) => label.top >= nav.top && label.bottom <= nav.bottom);
+    const nav = document.querySelector<HTMLElement>("[aria-label='Kategorije']")?.getBoundingClientRect();
+    const items = [...document.querySelectorAll<HTMLElement>("[aria-label='Kategorije'] .category-arc")].map((item) => item.getBoundingClientRect());
+    return !!nav && items.length > 0 && items.every((item) => item.top >= nav.top && item.bottom <= nav.bottom);
   });
   expect(categoriesFit).toBe(true);
   const addButton = page.getByRole("button", { name: /Dodaj u korpu/ });
   await expect(addButton).toBeVisible();
   await addButton.click();
   await expect(page.getByRole("link", { name: "Korpa, 1 artikala" })).toContainText("1");
+});
+
+test("točak kategorija razdvaja piće i hranu", async ({ page }) => {
+  await page.goto("/");
+  const drinks = page.getByRole("button", { name: "Piće", exact: true });
+  const food = page.getByRole("button", { name: "Hrana", exact: true });
+  await expect(drinks).toHaveAttribute("aria-pressed", "true");
+
+  await food.click();
+  await expect(food).toHaveAttribute("aria-pressed", "true");
+  await expect(drinks).toHaveAttribute("aria-pressed", "false");
+  await expect(page).toHaveURL(/\?category=/);
+
+  const centered = page.locator('.category-slot[data-active="true"]');
+  await expect(centered).toHaveCount(1);
+  const scrolled = await page.evaluate(() => document.querySelector(".category-wheel")!.scrollLeft);
+  expect(scrolled).toBeGreaterThan(0);
 });
 
 test("Android scroll pravila važe samo na početnom katalogu", async ({ page }) => {

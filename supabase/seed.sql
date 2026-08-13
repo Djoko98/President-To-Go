@@ -12,11 +12,20 @@ insert into public.business_hours(day_of_week, opens_at, closes_at, is_closed) v
   (6, '10:00', '23:59', false)
 on conflict (day_of_week) do update set opens_at = excluded.opens_at, closes_at = excluded.closes_at, is_closed = excluded.is_closed;
 
-insert into public.categories(name, slug, image_url, position) values
-  ('Kokteli', 'kokteli', '/images/products/lubenito.png', 0),
-  ('Kafe', 'kafe', '/images/products/lubenito.png', 1),
-  ('Voćni napici', 'vocni-napici', '/images/products/lubenito.png', 2)
-on conflict (slug) do update set name = excluded.name, image_url = excluded.image_url, position = excluded.position;
+insert into public.categories(name, slug, group_key, image_url, position) values
+  ('Kokteli', 'kokteli', 'drinks', '/images/products/lubenito.png', 0),
+  ('Kafe', 'kafe', 'drinks', '/images/products/lubenito.png', 1),
+  ('Voćni napici', 'vocni-napici', 'drinks', '/images/products/lubenito.png', 2),
+  ('Doručak', 'dorucak', 'food', null, 3),
+  ('Posno', 'posno', 'food', null, 4),
+  ('Paste', 'paste', 'food', null, 5),
+  ('Rižoto', 'rizoto', 'food', null, 6),
+  ('Pice', 'pice', 'food', null, 7),
+  ('Sa roštilja', 'sa-rostilja', 'food', null, 8),
+  ('Glavna jela', 'glavna-jela', 'food', null, 9),
+  ('Obrok salate', 'obrok-salate', 'food', null, 10),
+  ('Dezerti', 'dezerti', 'food', null, 11)
+on conflict (slug) do update set name = excluded.name, group_key = excluded.group_key, image_url = excluded.image_url, position = excluded.position;
 
 with data(category_slug, name, slug, description, ingredients, price, accent_color, alcohol, prep, max_qty, position) as (values
   ('kokteli','Lubenito','lubenito','Osvežavajući signature koktel od lubenice.','lubenica, nana, limeta, sprite, grenadin',59000,'#fde9e7',true,15,10,0),

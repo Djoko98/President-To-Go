@@ -50,7 +50,8 @@ export async function saveCategory(formData: FormData) {
   const id = z.string().uuid().parse(formData.get("id"));
   const name = z.string().trim().min(2).max(80).parse(formData.get("name"));
   const slug = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).parse(formData.get("slug"));
-  const { error } = await supabase.from("categories").update({ name, slug, is_active: formData.get("isActive") === "on" }).eq("id", id);
+  const groupKey = z.enum(["drinks", "food"]).parse(formData.get("groupKey"));
+  const { error } = await supabase.from("categories").update({ name, slug, group_key: groupKey, is_active: formData.get("isActive") === "on" }).eq("id", id);
   if (error) throw new Error(error.message); revalidatePath("/admin/kategorije"); revalidatePath("/");
 }
 

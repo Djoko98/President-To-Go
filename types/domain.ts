@@ -9,11 +9,14 @@ export type OrderStatus =
   | "cancelled"
   | "expired";
 
+export type CategoryGroup = "drinks" | "food";
+
 export interface Category {
   id: string;
   name: string;
   slug: string;
   image_url: string | null;
+  group_key: CategoryGroup;
   position: number;
   is_active: boolean;
 }

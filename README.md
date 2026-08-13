@@ -55,4 +55,8 @@ Node.js 22+ je obavezan. Projekat koristi `pnpm` i zaključane verzije iz `pnpm-
 
 ## Napomena o slikama
 
-Lubenito 3D asset je generisan za ovaj projekat i nalazi se u `public/images/products/lubenito.png`. `ProductImage` centralizuje fallback; admin upload šalje PNG, WebP ili JPEG (maksimalno 5 MB) u javni `product-images` bucket.
+Lubenito 3D asset je generisan za ovaj projekat i nalazi se u `public/images/products/lubenito.png`. `ProductImage` centralizuje prikaz: proizvod bez slike dobija označen „Nema slike” placeholder umesto tuđe slike. Admin upload šalje PNG, WebP ili JPEG (maksimalno 5 MB) u javni `product-images` bucket.
+
+## Kategorije
+
+Kategorije su podeljene u dve grupe preko kolone `categories.group_key` (`drinks` = piće, `food` = hrana). Gost ih bira u polukružnom točku koji se skroluje (`CategorySelector`); između grupa stoji razdvojnik, a dugmad „Piće” i „Hrana” skaču na početak grupe. Ikonice se mapiraju po slug-u u `lib/categories.tsx` — nova kategorija bez svoje ikonice dobija podrazumevanu ikonicu svoje grupe. Grupa se menja u adminu (`/admin/kategorije`).

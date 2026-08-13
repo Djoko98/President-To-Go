@@ -9,7 +9,10 @@
   --line: #dededb;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --header-h: clamp(70px, 11.5dvh, 112px);
-  --cat-h: clamp(100px, 15.5dvh, 128px);
+  --cat-h: clamp(132px, 19.5dvh, 162px);
+  --cat-groups-h: clamp(26px, 3.6dvh, 31px);
+  --cat-slot-w: clamp(66px, 10dvh, 80px);
+  --cat-badge: clamp(42px, 6.6dvh, 54px);
   --can-h: clamp(160px, 32dvh, 290px);
   --can-w: clamp(125px, 24.7dvh, 224px);
   --stage-top: clamp(6px, 1.2dvh, 12px);
@@ -46,9 +49,33 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 
 .public-home-header { height: var(--header-h); }
 .home-catalog { height: calc(100dvh - var(--header-h)); padding-bottom: calc(clamp(84px, 10.5dvh, 100px) + var(--safe-bottom)); overscroll-behavior: none; }
-.catalog-categories { height: var(--cat-h); padding-bottom: clamp(10px, 1.6dvh, 16px); }
-.catalog-category-image { width: clamp(44px, 7dvh, 56px); height: clamp(44px, 7dvh, 56px); }
-.catalog-category-icon { width: clamp(20px, 3.2dvh, 25px); height: clamp(20px, 3.2dvh, 25px); }
+.catalog-categories { height: var(--cat-h); display: flex; flex-direction: column; overflow: hidden; padding-bottom: clamp(4px, .8dvh, 10px); }
+
+/* Grupe: piće ↔ hrana */
+.category-groups { flex: 0 0 var(--cat-groups-h); display: grid; place-items: center; }
+.category-groups-track { display: inline-flex; align-items: center; gap: 2px; padding: 3px; border: 1px solid rgba(255,255,255,.9); border-radius: 999px; background: rgba(255,255,255,.6); box-shadow: 0 8px 22px rgba(21,21,21,.07); backdrop-filter: blur(12px); }
+.category-group { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: clamp(21px, 2.8dvh, 25px); padding-inline: clamp(10px, 1.6dvh, 14px); border: 0; border-radius: 999px; background: none; color: var(--muted); font-size: clamp(10px, 1.4dvh, 12px); font-weight: 800; cursor: pointer; transition: color .3s ease; }
+.category-group.is-active { color: #fff; }
+.category-group-pill { position: absolute; inset: 0; border-radius: 999px; background: var(--foreground); box-shadow: 0 6px 16px rgba(21,21,21,.26); }
+.category-group-icon { position: relative; z-index: 1; width: clamp(11px, 1.6dvh, 14px); height: clamp(11px, 1.6dvh, 14px); }
+
+/* Polukružni točak kategorija */
+.category-arc-guide { position: absolute; left: 50%; top: var(--arc-top, 62px); width: calc(var(--arc-radius, 480px) * 2); height: calc(var(--arc-radius, 480px) * 2); margin-left: calc(var(--arc-radius, 480px) * -1); border-radius: 50%; border-top: 1.5px dashed rgba(21,21,21,.13); pointer-events: none; }
+/* position: relative čini točak offsetParent-om stavki — merenje pozicija zavisi od toga. */
+.category-wheel { position: relative; flex: 1 1 auto; min-height: 0; width: min(100%, 560px); margin-inline: auto; display: flex; align-items: flex-start; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; touch-action: pan-x; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.category-wheel::-webkit-scrollbar { display: none; }
+.category-rail { flex: 0 0 calc(50% - var(--cat-slot-w) / 2); }
+.category-slot { flex: 0 0 var(--cat-slot-w); height: 100%; min-width: 0; display: flex; align-items: flex-start; justify-content: center; padding: 0; border: 0; background: none; scroll-snap-align: center; cursor: pointer; }
+.category-slot[data-active="true"] { position: relative; z-index: 2; }
+.category-divider { flex: 0 0 clamp(26px, 4dvh, 34px); height: 100%; display: flex; align-items: flex-start; justify-content: center; }
+.category-arc { display: flex; flex-direction: column; align-items: center; gap: clamp(3px, .55dvh, 6px); will-change: transform, opacity; }
+.category-divider-arc { height: var(--cat-badge); justify-content: center; }
+.category-divider-line { display: block; width: 2px; height: 64%; border-radius: 2px; background: repeating-linear-gradient(to bottom, rgba(21,21,21,.24) 0 4px, transparent 4px 8px); }
+.category-badge { display: grid; place-items: center; width: var(--cat-badge); height: var(--cat-badge); border: 1px solid rgba(21,21,21,.09); border-radius: 999px; background: #fff; color: #55554e; box-shadow: 0 6px 16px rgba(21,21,21,.06); transition: background-color .3s ease, color .3s ease, border-color .3s ease, box-shadow .3s ease; }
+.category-icon { width: clamp(19px, 3dvh, 24px); height: clamp(19px, 3dvh, 24px); }
+.category-label { max-width: calc(var(--cat-slot-w) * 2.2); font-size: clamp(10px, 1.5dvh, 12px); font-weight: 700; color: var(--muted); white-space: nowrap; transition: color .3s ease; }
+.category-slot[data-active="true"] .category-badge { border-color: transparent; background: var(--foreground); color: #fff; box-shadow: 0 12px 26px rgba(21,21,21,.28); }
+.category-slot[data-active="true"] .category-label { color: var(--foreground); font-weight: 800; }
 .catalog-product-stage { height: calc(100% - var(--cat-h)); min-height: 0; padding-top: var(--stage-top); }
 .catalog-product-image { height: var(--can-h); width: var(--can-w); flex: 0 0 auto; }
 .catalog-product-glow { height: clamp(260px, 48dvh, 440px); width: clamp(260px, 48dvh, 440px); }
@@ -65,12 +92,26 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .catalog-chips { justify-content: safe center; scrollbar-width: none; }
 .catalog-chips::-webkit-scrollbar { display: none; }
 
+/* Kategorija bez proizvoda */
+.catalog-empty { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: clamp(9px, 1.5dvh, 16px); text-align: center; }
+.catalog-empty-glow { position: absolute; z-index: -1; top: 42%; left: 50%; width: clamp(240px, 42dvh, 380px); height: clamp(240px, 42dvh, 380px); translate: -50% -50%; border-radius: 999px; background: radial-gradient(circle at center, rgba(255,255,255,.95) 0%, rgba(245,245,243,0) 68%); pointer-events: none; }
+.catalog-empty-art { position: relative; display: grid; place-items: center; width: clamp(110px, 21dvh, 164px); height: clamp(110px, 21dvh, 164px); }
+.catalog-empty-ring { position: absolute; inset: 0; border-radius: 999px; border: 2px dashed rgba(21,21,21,.15); }
+.catalog-empty-core { display: grid; place-items: center; width: 60%; height: 60%; border-radius: 999px; background: var(--surface); color: #22221f; box-shadow: 0 18px 40px rgba(21,21,21,.12); }
+.catalog-empty-icon { width: 44%; height: 44%; }
+
+/* Proizvod bez slike */
+.product-image-empty { container-type: size; display: grid; place-items: center; }
+.product-image-empty-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; gap: 5cqmin; width: 86%; height: 86%; border: 2px dashed rgba(21,21,21,.14); border-radius: clamp(14px, 12%, 34px); background: var(--empty-accent, rgba(255,255,255,.7)); background: color-mix(in srgb, var(--empty-accent, #ffffff) 52%, #ffffff); color: #9d9d95; }
+.product-image-empty-icon { width: 30%; height: 30%; width: 30cqmin; height: 30cqmin; max-width: 68px; max-height: 68px; opacity: .8; }
+.product-image-empty-text { font-size: 11px; font-size: clamp(9px, 9cqmin, 13px); font-weight: 700; letter-spacing: .01em; }
+
 @media (max-height: 700px) {
   .public-home-header span:last-child { margin-top: .25rem; }
   .catalog-product-stage { padding-inline: 1rem; }
 }
 @media (max-height: 640px) {
-  :root { --cat-h: 94px; --can-h: clamp(140px, 27dvh, 200px); --can-w: clamp(109px, 20.8dvh, 154px); --stage-top: 4px; }
+  :root { --cat-h: 112px; --cat-groups-h: 24px; --cat-slot-w: 62px; --cat-badge: 38px; --can-h: clamp(140px, 27dvh, 200px); --can-w: clamp(109px, 20.8dvh, 154px); --stage-top: 4px; }
   .catalog-product-stage h1 { font-size: clamp(1.25rem, 5vw, 1.55rem); }
   .catalog-product-glow { height: 42dvh; width: 42dvh; }
 }
