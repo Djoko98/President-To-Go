@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowUp, Edit3, Trash2 } from "lucide-react";
 import { moveProduct, setProductAvailability } from "@/features/admin/actions";
@@ -14,6 +14,17 @@ interface ProductRow { id: string; name: string; ingredients: string; price: num
 interface CategoryRow { id: string; name: string; group_key: CategoryGroup }
 
 const iconButton = "touch-target grid place-items-center rounded-full bg-neutral-100 disabled:opacity-35";
+const ACTIVE_CATEGORY_STORAGE_KEY = "president-to-go-admin-products-category";
+
+function readStoredCategory(): string | null {
+  if (typeof window === "undefined") return null;
+  try { return window.sessionStorage.getItem(ACTIVE_CATEGORY_STORAGE_KEY); } catch { return null; }
+}
+
+function storeCategory(id: string): void {
+  if (typeof window === "undefined") return;
+  try { window.sessionStorage.setItem(ACTIVE_CATEGORY_STORAGE_KEY, id); } catch { /* privatni režim bez storage-a */ }
+}
 
 function MoveButton({ product, direction, disabled }: { product: ProductRow; direction: "up" | "down"; disabled: boolean }) {
   return (
@@ -48,6 +59,13 @@ function ProductCard({ product, first, last }: { product: ProductRow; first: boo
 
 export function ProductsBrowser({ products, categories }: { products: ProductRow[]; categories: CategoryRow[] }) {
   const [active, setActive] = useState<string>("all");
+  // Filter preživljava odlazak na izmenu proizvoda i povratak na listu, pa ostajemo u istoj kategoriji.
+  const categoryIds = categories.map((category) => category.id).join(",");
+  useEffect(() => {
+    const stored = readStoredCategory();
+    if (stored && (stored === "all" || categoryIds.split(",").includes(stored))) setActive(stored);
+  }, [categoryIds]);
+  const selectCategory = (id: string) => { setActive(id); storeCategory(id); };
   const countByCategory = useMemo(() => products.reduce<Record<string, number>>((map, product) => ({ ...map, [product.category_id]: (map[product.category_id] ?? 0) + 1 }), {}), [products]);
   // Strelice se gase na krajevima kategorije — proizvodi stižu već poređani po position.
   const edges = useMemo(() => {
@@ -66,7 +84,7 @@ export function ProductsBrowser({ products, categories }: { products: ProductRow
       <div className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:mt-5 sm:px-0" role="tablist" aria-label="Filter kategorija">
         {chips.map((chip) => {
           const isActive = active === chip.id;
-          return <button key={chip.id} type="button" role="tab" aria-selected={isActive} onClick={() => setActive(chip.id)} className={`min-h-10 shrink-0 rounded-full px-4 text-sm font-bold transition active:scale-95 ${isActive ? "bg-black text-white" : "bg-white text-neutral-600"}`}>{chip.label}<span className={`ml-1.5 ${isActive ? "text-white/60" : "text-neutral-400"}`}>{chip.count}</span></button>;
+          return <button key={chip.id} type="button" role="tab" aria-selected={isActive} onClick={() => selectCategory(chip.id)} className={`min-h-10 shrink-0 rounded-full px-4 text-sm font-bold transition active:scale-95 ${isActive ? "bg-black text-white" : "bg-white text-neutral-600"}`}>{chip.label}<span className={`ml-1.5 ${isActive ? "text-white/60" : "text-neutral-400"}`}>{chip.count}</span></button>;
         })}
       </div>
 
