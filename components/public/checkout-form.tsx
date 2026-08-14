@@ -44,7 +44,7 @@ export function CheckoutForm() {
   }, {}), [slots]);
 
   if (!hydrated) return <div className="mx-auto mt-16 h-96 max-w-2xl animate-pulse rounded-3xl bg-neutral-200" />;
-  if (!items.length) return <main className="mx-auto grid min-h-[55dvh] max-w-lg place-items-center px-6 text-center"><div><h1 className="text-3xl font-bold">Korpa je prazna</h1><Link href="/" className="mt-6 inline-flex rounded-full bg-black px-6 py-3 font-bold text-white">Izaberi napitak</Link></div></main>;
+  if (!items.length) return <main className="mx-auto grid min-h-[55dvh] max-w-lg place-items-center px-6 text-center"><div><h1 className="text-3xl font-bold">Korpa je prazna</h1><Link href="/" className="mt-6 inline-flex rounded-full bg-black px-6 py-3 font-bold text-white">Izaberi iz ponude</Link></div></main>;
 
   const submit = handleSubmit(async (values) => {
     try {

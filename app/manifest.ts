@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "President To Go",
     short_name: "President",
-    description: "Napitak te čeka u restoranu President.",
+    description: "Piće i hrana te čekaju u restoranu President.",
     start_url: "/",
     scope: "/",
     id: "/",

@@ -5,10 +5,12 @@ import Link from "next/link";
 import { Edit3 } from "lucide-react";
 import { setProductAvailability } from "@/features/admin/actions";
 import { SubmitButton } from "@/components/admin/submit-button";
+import { CATEGORY_GROUPS } from "@/lib/categories";
 import { formatMoney } from "@/lib/money";
+import type { CategoryGroup } from "@/types/domain";
 
 interface ProductRow { id: string; name: string; ingredients: string; price: number; is_available: boolean; is_active: boolean; category_id: string; categories: { name: string } | null }
-interface CategoryRow { id: string; name: string }
+interface CategoryRow { id: string; name: string; group_key: CategoryGroup }
 
 function ProductCard({ product }: { product: ProductRow }) {
   return (
@@ -40,19 +42,30 @@ export function ProductsBrowser({ products, categories }: { products: ProductRow
       </div>
 
       {active === "all" ? (
-        <div className="mt-6 space-y-8 sm:mt-7">
-          {categories.filter((category) => (countByCategory[category.id] ?? 0) > 0).map((category) => (
-            <section key={category.id}>
-              <h2 className="text-sm font-bold uppercase tracking-[.12em] text-neutral-400">{category.name}</h2>
-              <div className="mt-3 grid gap-3 sm:gap-4 xl:grid-cols-2">{products.filter((product) => product.category_id === category.id).map((product) => <ProductCard key={product.id} product={product} />)}</div>
-            </section>
-          ))}
+        <div className="mt-6 space-y-10 sm:mt-7">
+          {CATEGORY_GROUPS.map((group) => {
+            const groupCategories = categories.filter((category) => category.group_key === group.key && (countByCategory[category.id] ?? 0) > 0);
+            if (!groupCategories.length) return null;
+            return (
+              <section key={group.key}>
+                <h2 className="text-xl font-bold">{group.label}</h2>
+                <div className="mt-4 space-y-8">
+                  {groupCategories.map((category) => (
+                    <section key={category.id}>
+                      <h3 className="text-sm font-bold uppercase tracking-[.12em] text-neutral-400">{category.name}</h3>
+                      <div className="mt-3 grid gap-3 sm:gap-4 xl:grid-cols-2">{products.filter((product) => product.category_id === category.id).map((product) => <ProductCard key={product.id} product={product} />)}</div>
+                    </section>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
         </div>
       ) : (
         <div className="mt-6 grid gap-3 sm:mt-7 sm:gap-4 xl:grid-cols-2">{products.filter((product) => product.category_id === active).map((product) => <ProductCard key={product.id} product={product} />)}</div>
       )}
 
-      {!products.length ? <p className="mt-10 rounded-2xl bg-white p-6 text-center font-semibold text-neutral-500">Još nema proizvoda. Dodaj prvi napitak.</p> : null}
+      {!products.length ? <p className="mt-10 rounded-2xl bg-white p-6 text-center font-semibold text-neutral-500">Još nema proizvoda. Dodaj prvi.</p> : null}
     </>
   );
 }

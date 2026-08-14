@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { ProductsBrowser } from "@/components/admin/products-browser";
 import { requireAdmin } from "@/lib/security/admin";
+import { normalizeCategoryGroup } from "@/lib/categories";
 
 export const dynamic = "force-dynamic";
 
@@ -9,10 +10,10 @@ export default async function Page() {
   const { supabase } = await requireAdmin(["owner", "manager"]);
   const [{ data: productData }, { data: categoryData }] = await Promise.all([
     supabase.from("products").select("id,name,ingredients,price,is_available,is_active,category_id,categories(name)").order("position").order("created_at"),
-    supabase.from("categories").select("id,name,position").order("position"),
+    supabase.from("categories").select("id,name,position,group_key").order("position"),
   ]);
   const products = (productData ?? []) as unknown as Array<{ id: string; name: string; ingredients: string; price: number; is_available: boolean; is_active: boolean; category_id: string; categories: { name: string } | null }>;
-  const categories = (categoryData ?? []) as Array<{ id: string; name: string }>;
+  const categories = (categoryData ?? []).map((category) => ({ id: category.id, name: category.name, group_key: normalizeCategoryGroup(category.group_key) }));
 
   return <main className="p-5 sm:p-8">
     <div className="flex flex-wrap items-end justify-between gap-4">

@@ -6,7 +6,7 @@ import { ServiceWorker } from "@/components/shared/service-worker";
 
 export const metadata: Metadata = {
   title: { default: "President To Go", template: "%s · President To Go" },
-  description: "Poruči koktele, kafe i voćne napitke za brzo preuzimanje u restoranu President.",
+  description: "Poruči piće i hranu za brzo preuzimanje u restoranu President.",
   applicationName: "President To Go",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "President To Go" },
