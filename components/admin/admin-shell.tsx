@@ -4,24 +4,28 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Archive, CalendarClock, ClipboardList, FolderKanban, Gauge, History, LogOut, Menu, Package, Settings, X } from "lucide-react";
+import { Archive, CalendarClock, ClipboardList, FolderKanban, Gauge, History, LogOut, Menu, Package, Settings, Users, X } from "lucide-react";
 import { signOut } from "@/features/admin/actions";
+import type { AdminRole } from "@/types/domain";
 
+// Uloge se poklapaju sa requireAdmin na svakoj stranici — link koji bi vratio grešku se ne prikazuje.
 const links = [
-  ["/admin", "Pregled", Gauge],
-  ["/admin/porudzbine", "Porudžbine", ClipboardList],
-  ["/admin/proizvodi", "Proizvodi", Package],
-  ["/admin/kategorije", "Kategorije", FolderKanban],
-  ["/admin/termini", "Termini", CalendarClock],
-  ["/admin/podesavanja", "Podešavanja", Settings],
-  ["/admin/istorija", "Istorija", History],
-] as const;
+  ["/admin", "Pregled", Gauge, ["owner", "manager"]],
+  ["/admin/porudzbine", "Porudžbine", ClipboardList, ["owner", "manager", "staff"]],
+  ["/admin/proizvodi", "Proizvodi", Package, ["owner", "manager", "staff"]],
+  ["/admin/kategorije", "Kategorije", FolderKanban, ["owner", "manager"]],
+  ["/admin/termini", "Termini", CalendarClock, ["owner", "manager"]],
+  ["/admin/podesavanja", "Podešavanja", Settings, ["owner"]],
+  ["/admin/osoblje", "Osoblje", Users, ["owner"]],
+  ["/admin/istorija", "Istorija", History, ["owner", "manager"]],
+] as const satisfies ReadonlyArray<readonly [string, string, typeof Gauge, readonly AdminRole[]]>;
 
-export function AdminShell({ children, orderingEnabled }: { children: React.ReactNode; orderingEnabled: boolean }) {
+export function AdminShell({ children, orderingEnabled, role }: { children: React.ReactNode; orderingEnabled: boolean; role: AdminRole | null }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
   if (pathname === "/admin/prijava") return children;
+  const visibleLinks = links.filter(([, , , roles]) => role && (roles as readonly AdminRole[]).includes(role));
 
   return (
     <div className="admin-grid bg-[#f4f4f2]">
@@ -42,7 +46,7 @@ export function AdminShell({ children, orderingEnabled }: { children: React.Reac
         </div>
         {menuOpen ? <button type="button" aria-label="Zatvori meni" onClick={() => setMenuOpen(false)} className="fixed inset-0 top-[69px] z-40 hidden bg-black/30 backdrop-blur-[2px] max-[820px]:block" /> : null}
         <nav id="admin-navigation" className={`mt-8 grid gap-1 max-[820px]:fixed max-[820px]:inset-x-3 max-[820px]:top-[72px] max-[820px]:z-50 max-[820px]:mt-0 max-[820px]:max-h-[calc(100dvh-84px)] max-[820px]:grid-cols-2 max-[820px]:overflow-y-auto max-[820px]:rounded-3xl max-[820px]:bg-white max-[820px]:p-3 max-[820px]:shadow-2xl ${menuOpen ? "max-[820px]:grid" : "max-[820px]:hidden"}`}>
-          {links.map(([href, label, Icon]) => {
+          {visibleLinks.map(([href, label, Icon]) => {
             const active = href === "/admin" ? pathname === href : pathname.startsWith(href);
             return <Link key={href} href={href} onClick={() => setMenuOpen(false)} className={`flex min-h-12 items-center gap-3 rounded-2xl px-4 font-bold transition max-[380px]:px-3 ${active ? "bg-neutral-900 text-white" : "text-neutral-600 hover:bg-neutral-100"}`}><Icon size={19} className="shrink-0" /><span className="truncate">{label}</span></Link>;
           })}

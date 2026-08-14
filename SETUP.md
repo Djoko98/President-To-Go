@@ -22,7 +22,7 @@ Na macOS/Linux sistemima koristi `cp .env.example .env.local`.
 |---|---:|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | da | URL projekta |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | da | publishable ili legacy anon ključ; bezbedan je za browser uz RLS |
-| `SUPABASE_SERVICE_ROLE_KEY` | ne | rezervisano za buduće pouzdane server jobove; trenutna aplikacija ga ne koristi |
+| `SUPABASE_SERVICE_ROLE_KEY` | da, za naloge osoblja | jedini način da `/admin/osoblje` napravi nalog radniku; drži ga samo na serveru (nikad uz `NEXT_PUBLIC_` prefiks) |
 | `NEXT_PUBLIC_APP_URL` | da | javni URL aplikacije |
 | `ORDER_TOKEN_SECRET` | da | najmanje 32 nasumična bajta; koristi se za hash IP adrese |
 | `NOTIFICATION_PROVIDER` | ne | `none` u prvoj fazi, kasnije `twilio` |

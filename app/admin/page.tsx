@@ -10,7 +10,8 @@ import type { CategoryGroup } from "@/types/domain";
 
 export const dynamic = "force-dynamic";
 export default async function AdminDashboard() {
-  const { supabase, profile } = await requireAdmin();
+  // Promet i najprodavaniji artikli ostaju van domašaja osoblja — requireAdmin ga vraća na porudžbine.
+  const { supabase, profile } = await requireAdmin(["owner", "manager"]);
   const today = new Date(); today.setHours(0,0,0,0);
   const belgradeDate = new Intl.DateTimeFormat("en-CA", { timeZone: BELGRADE_TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   const belgradeDow = new Date(`${belgradeDate}T00:00:00`).getDay();

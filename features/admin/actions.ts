@@ -28,9 +28,10 @@ export async function setOrderingEnabled(formData: FormData) {
 }
 
 export async function setProductAvailability(formData: FormData) {
-  const { supabase } = await requireAdmin(["owner", "manager"]);
+  // Jedina izmena proizvoda koju osoblje sme; RPC menja samo is_available, ostale kolone štiti RLS.
+  const { supabase } = await requireAdmin();
   const id = z.string().uuid().parse(formData.get("id")); const isAvailable = formData.get("available") === "true";
-  const { error } = await supabase.from("products").update({ is_available: isAvailable }).eq("id", id);
+  const { error } = await supabase.rpc("set_product_availability", { p_product_id: id, p_available: isAvailable });
   if (error) throw new Error(error.message); revalidatePath("/admin/proizvodi"); revalidatePath("/");
 }
 

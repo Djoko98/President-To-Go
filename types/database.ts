@@ -21,7 +21,7 @@ export interface Database {
       app_settings: GenericTable<{
         id: string; ordering_enabled: boolean; default_preparation_minutes: number; slot_interval_minutes: number; max_orders_per_slot: number; max_advance_minutes: number; restaurant_phone: string; restaurant_address: string; timezone: string; updated_at: string;
       }>;
-      profiles: GenericTable<{ id: string; full_name: string; role: AdminRole; created_at: string; updated_at: string }>;
+      profiles: GenericTable<{ id: string; full_name: string; role: AdminRole; is_active: boolean; created_at: string; updated_at: string }>;
       orders: GenericTable<{
         id: string; public_token: string; order_number: string; customer_name: string; customer_phone: string; customer_note: string | null; requested_pickup_at: string; confirmed_pickup_at: string | null; status: OrderStatus; subtotal: number; total: number; contains_alcohol: boolean; rejection_reason: string | null; created_at: string; accepted_at: string | null; ready_at: string | null; completed_at: string | null; updated_at: string;
       }>;
@@ -39,6 +39,7 @@ export interface Database {
       get_available_slots: { Args: { p_day: string }; Returns: Array<{ starts_at: string; is_available: boolean }> };
       change_order_status: { Args: { p_order_id: string; p_status: OrderStatus; p_confirmed_pickup_at?: string | null; p_note?: string | null }; Returns: Database["public"]["Tables"]["orders"]["Row"] };
       is_admin: { Args: { required_roles?: AdminRole[] }; Returns: boolean };
+      set_product_availability: { Args: { p_product_id: string; p_available: boolean }; Returns: void };
     };
     Enums: { admin_role: AdminRole; order_status: OrderStatus };
     CompositeTypes: Record<string, never>;
