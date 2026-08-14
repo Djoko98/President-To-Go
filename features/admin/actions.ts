@@ -41,7 +41,9 @@ export async function saveProduct(formData: FormData) {
     name: formData.get("name"), slug: formData.get("slug"), description: formData.get("description"), ingredients: formData.get("ingredients"), priceRsd: formData.get("priceRsd"), categoryId: formData.get("categoryId"), accentColor: formData.get("accentColor"), containsAlcohol: formData.get("containsAlcohol") === "on", preparationMinutes: formData.get("preparationMinutes"), maxQuantity: formData.get("maxQuantity"), isAvailable: formData.get("isAvailable") === "on", isActive: formData.get("isActive") === "on",
   });
   const values = { name: parsed.name, slug: parsed.slug, description: parsed.description, ingredients: parsed.ingredients, price: parsed.priceRsd * 100, category_id: parsed.categoryId, accent_color: parsed.accentColor, contains_alcohol: parsed.containsAlcohol, preparation_minutes: parsed.preparationMinutes, max_quantity_per_order: parsed.maxQuantity, is_available: parsed.isAvailable, is_active: parsed.isActive };
-  const result = id ? await supabase.from("products").update(values).eq("id", id) : await supabase.from("products").insert(values);
+  // Novi proizvod ide na kraj svoje kategorije, pa redosled prati redosled dodavanja.
+  const { data: last } = id ? { data: null } : await supabase.from("products").select("position").eq("category_id", parsed.categoryId).order("position", { ascending: false }).limit(1).maybeSingle();
+  const result = id ? await supabase.from("products").update(values).eq("id", id) : await supabase.from("products").insert({ ...values, position: (last?.position ?? -1) + 1 });
   if (result.error) throw new Error(result.error.message); revalidatePath("/admin/proizvodi"); revalidatePath("/"); redirect("/admin/proizvodi");
 }
 

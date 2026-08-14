@@ -6,7 +6,8 @@ import { toast } from "sonner";
 import { saveBusinessHours, type AdminActionState } from "@/features/admin/actions";
 
 const initialState: AdminActionState = { status: "idle", message: "" };
-const days = ["Nedelja", "Ponedeljak", "Utorak", "Sreda", "Četvrtak", "Petak", "Subota"];
+/** Prikaz ide od ponedeljka do nedelje; broj dana ostaje po bazi (0 = nedelja). */
+const days: Array<[number, string]> = [[1, "Ponedeljak"], [2, "Utorak"], [3, "Sreda"], [4, "Četvrtak"], [5, "Petak"], [6, "Subota"], [0, "Nedelja"]];
 
 interface BusinessHour {
   day_of_week: number;
@@ -29,7 +30,7 @@ export function BusinessHoursForm({ hours }: { hours: BusinessHour[] }) {
     <form action={action} className="mt-6 rounded-3xl bg-white p-4 sm:mt-7 sm:rounded-[30px] sm:p-7">
       <div><h2 className="text-2xl font-bold">Radno vreme</h2><p className="mt-1 text-sm text-neutral-500">Izmeni vreme otvaranja i zatvaranja za svaki dan.</p></div>
       <div className="mt-5 grid gap-3 lg:grid-cols-2">
-        {days.map((name, dayOfWeek) => {
+        {days.map(([dayOfWeek, name]) => {
           const day = byDay.get(dayOfWeek);
           const isClosed = closed[dayOfWeek] ?? false;
           return <fieldset key={dayOfWeek} className="rounded-2xl border border-neutral-200 p-3 sm:p-4"><div className="flex items-center justify-between gap-3"><legend className="font-bold">{name}</legend><label className="flex cursor-pointer items-center gap-2 text-sm font-semibold"><input name={`closed-${dayOfWeek}`} type="checkbox" checked={isClosed} onChange={(event) => setClosed((current) => ({ ...current, [dayOfWeek]: event.target.checked }))} className="size-5 accent-black" />Zatvoreno</label></div><div className="mt-4 grid gap-3 min-[380px]:grid-cols-2"><label className="text-sm font-semibold text-neutral-600">Otvaranje<input aria-label={`${name} otvaranje`} name={`opens-${dayOfWeek}`} type="time" required={!isClosed} disabled={isClosed} defaultValue={day?.opens_at?.slice(0,5) ?? "10:00"} className="mt-1 block min-h-12 w-full rounded-xl border border-neutral-200 bg-white px-3 text-base tabular-nums text-neutral-900 disabled:bg-neutral-100 disabled:text-neutral-400" /></label><label className="text-sm font-semibold text-neutral-600">Zatvaranje<input aria-label={`${name} zatvaranje`} name={`closes-${dayOfWeek}`} type="time" required={!isClosed} disabled={isClosed} defaultValue={day?.closes_at?.slice(0,5) ?? "23:00"} className="mt-1 block min-h-12 w-full rounded-xl border border-neutral-200 bg-white px-3 text-base tabular-nums text-neutral-900 disabled:bg-neutral-100 disabled:text-neutral-400" /></label></div></fieldset>;

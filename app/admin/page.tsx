@@ -14,14 +14,16 @@ export default async function AdminDashboard() {
   const belgradeDow = new Date(`${belgradeDate}T00:00:00`).getDay();
   const [{ data: orders }, { data: items }, { data: settings }, { data: todayHours }] = await Promise.all([
     supabase.from("orders").select("id,status,total,created_at,accepted_at,ready_at").gte("created_at", today.toISOString()),
-    supabase.from("order_items").select("product_name_snapshot,quantity,line_total,created_at").gte("created_at", today.toISOString()),
+    supabase.from("order_items").select("order_id,product_name_snapshot,quantity,line_total,created_at").gte("created_at", today.toISOString()),
     supabase.from("app_settings").select("ordering_enabled").limit(1).single(),
     supabase.from("business_hours").select("opens_at,closes_at,is_closed").eq("day_of_week", belgradeDow).maybeSingle(),
   ]);
   const rows = orders ?? []; const itemRows = items ?? [];
   const active = rows.filter((order) => ["accepted","preparing"].includes(order.status)).length;
   const revenue = rows.filter((order) => order.status !== "rejected" && order.status !== "cancelled").reduce((sum, order) => sum + order.total, 0);
-  const sold = itemRows.reduce((sum, item) => sum + item.quantity, 0);
+  // Prodato je samo ono što je gost stvarno preuzeo — odbijene, otkazane i porudžbine u toku se ne broje.
+  const pickedUp = new Set(rows.filter((order) => order.status === "completed").map((order) => order.id));
+  const sold = itemRows.filter((item) => pickedUp.has(item.order_id)).reduce((sum, item) => sum + item.quantity, 0);
   const counts = itemRows.reduce<Record<string,number>>((map,item) => ({ ...map, [item.product_name_snapshot]: (map[item.product_name_snapshot] ?? 0) + item.quantity }), {});
   const bestseller = Object.entries(counts).sort((a,b) => b[1]-a[1])[0]?.[0] ?? "—";
   const prepTimes = rows.flatMap((order) => order.accepted_at && order.ready_at ? [(new Date(order.ready_at).getTime()-new Date(order.accepted_at).getTime())/60000] : []);

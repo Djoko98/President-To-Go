@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function Page() {
   const { supabase } = await requireAdmin(["owner", "manager"]);
   const [{ data: productData }, { data: categoryData }] = await Promise.all([
-    supabase.from("products").select("id,name,ingredients,price,is_available,is_active,category_id,categories(name)").order("position"),
+    supabase.from("products").select("id,name,ingredients,price,is_available,is_active,category_id,categories(name)").order("position").order("created_at"),
     supabase.from("categories").select("id,name,position").order("position"),
   ]);
   const products = (productData ?? []) as unknown as Array<{ id: string; name: string; ingredients: string; price: number; is_available: boolean; is_active: boolean; category_id: string; categories: { name: string } | null }>;

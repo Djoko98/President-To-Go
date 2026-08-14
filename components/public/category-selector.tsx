@@ -8,7 +8,7 @@ import type { Category, CategoryGroup } from "@/types/domain";
 type Slot = { key: string; category: Category | null };
 type GroupsShape = { plate: string; thumbs: Record<string, string> };
 type Drag = { x: number; scroll: number; time: number; index: number; lastX: number; lastTime: number; prevX: number; prevTime: number; moved: boolean };
-type Geometry = { arcs: HTMLElement[]; labels: Array<HTMLElement | null>; ids: Array<string | null>; centers: number[]; span: number; radius: number };
+type Geometry = { arcs: HTMLElement[]; labels: Array<HTMLElement | null>; ids: Array<string | null>; centers: number[]; span: number; radius: number; step: number };
 
 const MIN_DROP = 16;
 const MAX_DROP = 46;
@@ -17,6 +17,8 @@ const SETTLE_MS = 130;
 const FLICK_MS = 320;
 const BAND_GAP = 6;
 const LINE_GAP = 7;
+/** Vidljivost naziva svake necentrirane kategorije — ista za prvog suseda i za krajnje stavke. */
+const LABEL_DIM = 0.34;
 
 /** Kapsula čije obe ivice leže na kružnici točka, sa zaobljenim krajevima. */
 function arcCapsule(from: number, to: number, thickness: number, radius: number, centerX: number, centerY: number) {
@@ -130,6 +132,7 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
       centers: elements.map((slot) => slot.offsetLeft + slot.offsetWidth / 2),
       span,
       radius,
+      step: elements[0]?.offsetWidth ?? 0,
     };
   }, []);
 
@@ -149,10 +152,16 @@ export function CategorySelector({ categories, activeId, onChange }: { categorie
       const ratio = Math.min(1, Math.abs(distance) / geometry.span);
       const arc = geometry.arcs[index];
       if (!arc) return;
+      const faded = 1 - 0.62 * ratio;
       arc.style.transform = `translate3d(0,${drop.toFixed(2)}px,0) scale(${(1 - 0.2 * ratio).toFixed(3)})`;
-      arc.style.opacity = (1 - 0.62 * ratio).toFixed(3);
+      arc.style.opacity = faded.toFixed(3);
       const label = geometry.labels[index];
-      if (label) label.style.opacity = Math.max(0, 1 - 1.25 * ratio).toFixed(3);
+      // Naziv ne bledi dalje od prvog suseda: prigušenje se zaustavi na jednom mestu od centra, a
+      // deljenjem sa prigušenjem luka poništava se dodatno gašenje kroz roditelja — i krajnje se čitaju.
+      if (label) {
+        const away = geometry.step ? Math.min(1, Math.abs(distance) / geometry.step) : 1;
+        label.style.opacity = Math.min(1, (1 - (1 - LABEL_DIM) * away) / faded).toFixed(3);
+      }
       const id = geometry.ids[index];
       if (id && Math.abs(distance) < nearest) { nearest = Math.abs(distance); nearestId = id; }
     });
