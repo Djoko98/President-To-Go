@@ -34,17 +34,25 @@ function arcCapsule(from: number, to: number, thickness: number, radius: number,
 function shapeGroups(nav: HTMLElement, centerY: number): GroupsShape | null {
   const groups = nav.querySelector<HTMLElement>("[data-groups]");
   if (!groups?.offsetWidth) return null;
-  const thickness = Number.parseFloat(getComputedStyle(nav).getPropertyValue("--cat-groups-t")) || 34;
+  const buttons = Array.from(groups.querySelectorAll<HTMLElement>("[data-group-key]"));
+  const first = buttons[0];
+  if (!first) return null;
   const width = groups.offsetWidth;
   const padding = Number.parseFloat(getComputedStyle(groups).paddingTop) || 6;
+  // Debljina se meri iz samog dugmeta, ne iz --cat-groups-t: getComputedStyle vraća clamp() nerazrešen,
+  // pa bi podloga ostala na fiksnoj vrednosti dok natpisi prate stvarnu visinu — i tekst bi ispao iz sredine.
+  const height = Number.parseFloat(getComputedStyle(first).height);
+  if (!height) return null;
+  // Podloga je dugme sa razmakom sa obe strane, pa joj se osa poklapa sa sredinom reda dugmadi.
+  const thickness = height + padding * 2;
   const centerX = width / 2;
   const radius = Math.max(120, centerY - groups.offsetTop - thickness / 2);
   const localCenterY = thickness / 2 + radius;
   const thumbs: Record<string, string> = {};
-  for (const button of groups.querySelectorAll<HTMLElement>("[data-group-key]")) {
+  for (const button of buttons) {
     const left = button.offsetLeft;
     const middle = left + button.offsetWidth / 2 - centerX;
-    thumbs[button.dataset.groupKey ?? ""] = arcCapsule(left, left + button.offsetWidth, thickness - padding * 2, radius, centerX, localCenterY);
+    thumbs[button.dataset.groupKey ?? ""] = arcCapsule(left, left + button.offsetWidth, height, radius, centerX, localCenterY);
     button.style.setProperty("--group-sag", `${(radius - Math.sqrt(Math.max(0, radius * radius - middle * middle))).toFixed(2)}px`);
     button.style.setProperty("--group-tilt", `${((Math.asin(middle / radius) * 180) / Math.PI).toFixed(2)}deg`);
   }
