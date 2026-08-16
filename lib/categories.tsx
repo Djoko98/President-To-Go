@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
-import { CakeSlice, Citrus, Coffee, CupSoda, EggFried, Fish, Flame, GlassWater, Martini, Pizza, Salad, Utensils, UtensilsCrossed } from "lucide-react";
+import { CakeSlice, Citrus, Coffee, CupSoda, EggFried, Fish, Flame, GlassWater, Martini, Pizza, Salad, Soup, Utensils, UtensilsCrossed } from "lucide-react";
 import type { Category, CategoryGroup } from "@/types/domain";
 
 type IconProps = { className?: string; strokeWidth?: number; "aria-hidden"?: boolean };
@@ -13,7 +13,7 @@ export const CATEGORY_GROUPS: Array<{ key: CategoryGroup; label: string; icon: C
 const GROUP_ORDER: Record<CategoryGroup, number> = { drinks: 0, food: 1 };
 const GROUP_FALLBACK_ICON: Record<CategoryGroup, CategoryIconComponent> = { drinks: GlassWater, food: UtensilsCrossed };
 
-/** Lucide nema ikonicu za pastu i suši, pa su nacrtane u istom stilu (24×24, currentColor). */
+/** Lucide nema ikonicu za pastu, suši i hleb, pa su nacrtane u istom stilu (24×24, currentColor). */
 function StrokeIcon({ children, className, strokeWidth = 2 }: IconProps & { children: ReactNode }) {
   return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden className={className}>{children}</svg>;
 }
@@ -38,6 +38,17 @@ function SushiIcon(props: IconProps) {
   );
 }
 
+function BreadIcon(props: IconProps) {
+  return (
+    <StrokeIcon {...props}>
+      <path d="M3.8 13.6c0-4 3.7-7.3 8.2-7.3s8.2 3.3 8.2 7.3v1.8a2.4 2.4 0 0 1-2.4 2.4H6.2a2.4 2.4 0 0 1-2.4-2.4Z" />
+      <path d="M9.2 9.5 7.7 12.1" />
+      <path d="M12.6 9 11.1 11.6" />
+      <path d="M16 9.7l-1.5 2.6" />
+    </StrokeIcon>
+  );
+}
+
 const CATEGORY_ICONS: Record<string, CategoryIconComponent> = {
   kokteli: Martini,
   kafe: Coffee,
@@ -49,8 +60,10 @@ const CATEGORY_ICONS: Record<string, CategoryIconComponent> = {
   pice: Pizza,
   "sa-rostilja": Flame,
   "glavna-jela": Utensils,
+  "corbe-i-potazi": Soup,
   "obrok-salate": Salad,
   dezerti: CakeSlice,
+  dodaci: BreadIcon,
 };
 
 export function normalizeCategoryGroup(value: unknown): CategoryGroup {

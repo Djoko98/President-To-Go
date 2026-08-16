@@ -14,8 +14,10 @@ export const fallbackCategories: Category[] = [
   category("cat-pice", "Pice", "pice", "food", 7),
   category("cat-rostilj", "Sa roštilja", "sa-rostilja", "food", 8),
   category("cat-glavna-jela", "Glavna jela", "glavna-jela", "food", 9),
-  category("cat-obrok-salate", "Obrok salate", "obrok-salate", "food", 10),
-  category("cat-dezerti", "Dezerti", "dezerti", "food", 11),
+  category("cat-corbe", "Čorbe i potaži", "corbe-i-potazi", "food", 10),
+  category("cat-obrok-salate", "Obrok salate", "obrok-salate", "food", 11),
+  category("cat-dezerti", "Dezerti", "dezerti", "food", 12),
+  category("cat-dodaci", "Dodaci", "dodaci", "food", 13),
 ];
 
 const product = (id: string, category_id: string, name: string, slug: string, ingredients: string, price: number, position: number, accent_color: string, contains_alcohol = false): Product => ({

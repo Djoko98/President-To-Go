@@ -4,8 +4,8 @@ Push obaveštenja o novim porudžbinama (rade i kada je aplikacija zatvorena).
 
 ## ✅ Već urađeno (kod + Supabase + CLI)
 
-- Tabela `push_subscriptions` (+ RLS), `pg_net` ekstenzija i trigger `orders_notify_admins` na `orders`.
-- Edge funkcija `notify-admins` (deployovana) — šalje Web Push preko VAPID-a.
+- Tabela `push_subscriptions` (+ RLS), `pg_net` ekstenzija i trigger `orders_notify_admins` na `orders` — migracija `supabase/migrations/20260717123803_web_push_notifications.sql`.
+- Edge funkcija `notify-admins` (deployovana) — šalje Web Push preko VAPID-a; izvor je `supabase/functions/notify-admins/index.ts`.
 - Service worker (`public/sw.js`) — `push` i `notificationclick` handleri.
 - Dugme „Uključi obaveštenja" u Porudžbinama (pretplata uređaja).
 - **Tajne funkcije postavljene preko CLI-ja:** `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `WEBHOOK_SECRET`.
@@ -44,6 +44,14 @@ Ništa drugo u Supabase-u ne zavisi od domena (Data API, Realtime, Storage, Edge
 - Otvori `https://restoranpresident.com` na telefonu i **dodaj na početni ekran** (iOS: Safari → Podeli → „Add to Home Screen"). Na iOS-u push radi **samo** za instaliran PWA.
 - Otvori app sa početnog ekrana → Administracija → Porudžbine → **Uključi obaveštenja** i dozvoli.
 - Gotovo — nove porudžbine stižu kao push i kada je app zatvoren.
+
+## Ponovni deploy edge funkcije
+
+Funkcija je u projektu podešena sa `verify_jwt = false`, jer je zove DB trigger koji šalje `x-webhook-secret` header umesto JWT-a. Podrazumevana vrednost pri deployu je suprotna, pa se zastavica mora navesti — bez nje trigger dobija 401 i obaveštenja tiho prestaju da stižu:
+
+```bash
+npx supabase functions deploy notify-admins --project-ref hqnpktinpubbcclohcgt --no-verify-jwt
+```
 
 ## Rotiranje ključeva (ako ikad zatreba)
 
