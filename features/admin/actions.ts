@@ -17,7 +17,8 @@ function actionError(error: unknown, fallback: string): AdminActionState {
 }
 
 export async function signOut() {
-  const { supabase } = await requireAdmin(); await supabase.auth.signOut(); redirect("/admin/prijava");
+  // scope "local": Supabase po podrazumevanju gasi sesiju globalno, pa bi odjava na jednom telefonu izbacila ceo tim.
+  const { supabase } = await requireAdmin(); await supabase.auth.signOut({ scope: "local" }); redirect("/admin/prijava");
 }
 
 export async function setOrderingEnabled(formData: FormData) {
