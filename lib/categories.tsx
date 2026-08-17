@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
-import { CakeSlice, Citrus, Coffee, CupSoda, EggFried, Fish, Flame, GlassWater, Leaf, Martini, Pizza, Salad, Soup, Utensils, UtensilsCrossed } from "lucide-react";
+import { CakeSlice, Citrus, Coffee, CupSoda, EggFried, Fish, Flame, GlassWater, Martini, Pizza, Salad, Soup, Utensils, UtensilsCrossed } from "lucide-react";
 import type { Category, CategoryGroup } from "@/types/domain";
 
 type IconProps = { className?: string; strokeWidth?: number; "aria-hidden"?: boolean };
@@ -13,7 +13,7 @@ export const CATEGORY_GROUPS: Array<{ key: CategoryGroup; label: string; icon: C
 const GROUP_ORDER: Record<CategoryGroup, number> = { drinks: 0, food: 1 };
 const GROUP_FALLBACK_ICON: Record<CategoryGroup, CategoryIconComponent> = { drinks: GlassWater, food: UtensilsCrossed };
 
-/** Lucide nema ikonicu za pastu, suši i hleb, pa su nacrtane u istom stilu (24×24, currentColor). */
+/** Lucide nema ikonicu za pastu, suši, hleb i zelenu salatu, pa su nacrtane u istom stilu (24×24, currentColor). */
 function StrokeIcon({ children, className, strokeWidth = 2 }: IconProps & { children: ReactNode }) {
   return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden className={className}>{children}</svg>;
 }
@@ -49,6 +49,19 @@ function BreadIcon(props: IconProps) {
   );
 }
 
+/** Naborana liska zelene salate gore levo, kriška paradajza dole desno. */
+function LettuceIcon(props: IconProps) {
+  return (
+    <StrokeIcon {...props}>
+      <path d="M4 13.5C3.6 11.6 4 9.9 5.3 8.5C5.9 6.6 7.1 5.4 9 4.8C10.4 3.5 12.1 3.1 14 3.5C14 9.5 9.5 13.5 4 13.5Z" />
+      <path d="M4.8 12.7 12.4 5.1" />
+      <path d="M4 13.5 2.4 15.7" />
+      <circle cx="16.4" cy="16.4" r="5" />
+      <circle cx="16.4" cy="16.4" r="2.5" />
+    </StrokeIcon>
+  );
+}
+
 const CATEGORY_ICONS: Record<string, CategoryIconComponent> = {
   kokteli: Martini,
   kafe: Coffee,
@@ -62,7 +75,7 @@ const CATEGORY_ICONS: Record<string, CategoryIconComponent> = {
   "glavna-jela": Utensils,
   "corbe-i-potazi": Soup,
   "obrok-salate": Salad,
-  salate: Leaf,
+  salate: LettuceIcon,
   dezerti: CakeSlice,
   dodaci: BreadIcon,
 };

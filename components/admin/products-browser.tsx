@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, Edit3, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Edit3, Trash2 } from "lucide-react";
 import { reorderProducts, setProductAvailability } from "@/features/admin/actions";
 import { DeleteProductButton } from "@/components/admin/delete-product-button";
 import { SubmitButton } from "@/components/admin/submit-button";
@@ -41,9 +41,9 @@ function MoveButton({ product, direction, disabled, onMove }: { product: Product
   );
 }
 
-function ProductCard({ product, first, last, canManage, onMove }: { product: ProductRow; first: boolean; last: boolean; canManage: boolean; onMove: MoveHandler }) {
+function ProductCard({ product, first, last, canManage, onMove, moving, cardRef }: { product: ProductRow; first: boolean; last: boolean; canManage: boolean; onMove: MoveHandler; moving: boolean; cardRef?: React.Ref<HTMLElement> }) {
   return (
-    <article className="rounded-3xl bg-white p-4 sm:p-5">
+    <article ref={cardRef} className={`rounded-3xl bg-white p-4 transition sm:p-5 ${moving ? "ring-2 ring-black" : ""}`}>
       <span className="text-xs font-bold uppercase tracking-[.12em] text-neutral-400">{product.categories?.name}</span>
       <h2 className="mt-1 text-lg font-bold">{product.name}</h2>
       <p className="mt-1 line-clamp-2 text-sm text-neutral-500">{product.ingredients}</p>
@@ -69,15 +69,20 @@ export function ProductsBrowser({ products, categories, canManage }: { products:
   const stored = useSyncExternalStore(subscribeToStoredCategory, readStoredCategory, () => null);
   const remembered = chosen ?? stored ?? "all";
   const active = remembered === "all" || categories.some((category) => category.id === remembered) ? remembered : "all";
-  const selectCategory = (id: string) => { setChosen(id); storeCategory(id); };
+  const selectCategory = (id: string) => { setChosen(id); storeCategory(id); setMovingId(null); };
 
   // Strelice pomeraju listu odmah u pregledaču; server saznaje tek kad klikovi stanu, pa se ne čeka učitavanje po pomeraju.
   const [order, setOrder] = useState<Record<string, string[]>>({});
   const [saving, setSaving] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  // Kartica koja se pomera menja mesto sa susedom, pa bi sledeći klik na istoj tački pogodio suseda i vratio je nazad.
+  // Zato posle prve strelice preuzima traka koja stoji na istom mestu i pomera baš taj proizvod koliko god puta treba.
+  const [movingId, setMovingId] = useState<string | null>(null);
   const orderRef = useRef<Record<string, string[]>>({});
   const timersRef = useRef<Record<string, number>>({});
   const dirtyRef = useRef<Set<string>>(new Set());
+  const chainRef = useRef<Promise<void>>(Promise.resolve());
+  const movingCardRef = useRef<HTMLElement | null>(null);
 
   const byCategory = useMemo(() => {
     const grouped = products.reduce<Record<string, ProductRow[]>>((map, product) => {
@@ -100,22 +105,26 @@ export function ProductsBrowser({ products, categories, canManage }: { products:
     return { first: index <= 0, last: index === -1 || index === list.length - 1 };
   };
 
-  const save = useCallback(async (categoryId: string) => {
+  const save = useCallback((categoryId: string) => {
     const ids = orderRef.current[categoryId];
     if (!ids) return;
     dirtyRef.current.delete(categoryId);
     setSaving((count) => count + 1);
-    try {
-      await reorderProducts({ categoryId, ids });
-      setError(null);
-    } catch (cause) {
-      // Neuspeh vraća prikaz na ono što server zaista ima, da admin ne gleda redosled koji nije sačuvan.
-      setOrder((previous) => { const next = { ...previous }; delete next[categoryId]; return next; });
-      delete orderRef.current[categoryId];
-      setError(cause instanceof Error ? cause.message : "Redosled nije sačuvan.");
-    } finally {
-      setSaving((count) => count - 1);
-    }
+    const write = async () => {
+      try {
+        await reorderProducts({ categoryId, ids });
+        setError(null);
+      } catch (cause) {
+        // Neuspeh vraća prikaz na ono što server zaista ima, da admin ne gleda redosled koji nije sačuvan.
+        setOrder((previous) => { const next = { ...previous }; delete next[categoryId]; return next; });
+        delete orderRef.current[categoryId];
+        setError(cause instanceof Error ? cause.message : "Redosled nije sačuvan.");
+      } finally {
+        setSaving((count) => count - 1);
+      }
+    };
+    // Upisi se nižu jedan za drugim: dva paralelna bi mogla da se izmešaju i ostave pola starog redosleda.
+    chainRef.current = chainRef.current.then(write, write);
   }, []);
 
   const move = useCallback<MoveHandler>((product, direction) => {
@@ -131,9 +140,10 @@ export function ProductsBrowser({ products, categories, canManage }: { products:
     orderRef.current = { ...orderRef.current, [categoryId]: next };
     dirtyRef.current.add(categoryId);
     setOrder(orderRef.current);
+    setMovingId(product.id);
     setError(null);
     window.clearTimeout(timersRef.current[categoryId]);
-    timersRef.current[categoryId] = window.setTimeout(() => void save(categoryId), SAVE_DELAY_MS);
+    timersRef.current[categoryId] = window.setTimeout(() => save(categoryId), SAVE_DELAY_MS);
   }, [byCategory, save]);
 
   useEffect(() => {
@@ -142,13 +152,25 @@ export function ProductsBrowser({ products, categories, canManage }: { products:
     // Odlazak sa stranice u toku pauze ne sme da pojede poslednje klikove.
     return () => {
       Object.values(timers).forEach((timer) => window.clearTimeout(timer));
-      [...dirty].forEach((categoryId) => void save(categoryId));
+      [...dirty].forEach((categoryId) => save(categoryId));
     };
   }, [save]);
+
+  const moving = useMemo(() => {
+    const product = movingId ? products.find((item) => item.id === movingId) ?? null : null;
+    if (!product) return null;
+    const list = byCategory[product.category_id] ?? [];
+    const index = list.findIndex((item) => item.id === product.id);
+    return { product, place: index + 1, total: list.length, first: index <= 0, last: index === list.length - 1 };
+  }, [movingId, products, byCategory]);
+
+  // Proizvod koji putuje kroz dugačku kategoriju ne sme da nestane sa ekrana dok se strelica drži.
+  useEffect(() => { movingCardRef.current?.scrollIntoView({ block: "nearest" }); }, [order, movingId]);
 
   const countByCategory = useMemo(() => Object.fromEntries(Object.entries(byCategory).map(([categoryId, list]) => [categoryId, list.length])), [byCategory]);
   const chips: Array<{ id: string; label: string; count: number }> = [{ id: "all", label: "Sve", count: products.length }, ...categories.map((category) => ({ id: category.id, label: category.name, count: countByCategory[category.id] ?? 0 }))];
   const status = saving > 0 ? "Čuvam redosled…" : error;
+  const cardProps = (product: ProductRow) => ({ product, canManage, onMove: move, moving: product.id === movingId, cardRef: product.id === movingId ? movingCardRef : undefined, ...edgesOf(product) });
 
   return (
     <>
@@ -173,7 +195,7 @@ export function ProductsBrowser({ products, categories, canManage }: { products:
                   {groupCategories.map((category) => (
                     <section key={category.id}>
                       <h3 className="text-sm font-bold uppercase tracking-[.12em] text-neutral-400">{category.name}</h3>
-                      <div className="mt-3 grid gap-3 sm:gap-4 xl:grid-cols-2">{(byCategory[category.id] ?? []).map((product) => <ProductCard key={product.id} product={product} canManage={canManage} onMove={move} {...edgesOf(product)} />)}</div>
+                      <div className="mt-3 grid gap-3 sm:gap-4 xl:grid-cols-2">{(byCategory[category.id] ?? []).map((product) => <ProductCard key={product.id} {...cardProps(product)} />)}</div>
                     </section>
                   ))}
                 </div>
@@ -182,10 +204,28 @@ export function ProductsBrowser({ products, categories, canManage }: { products:
           })}
         </div>
       ) : (
-        <div className="mt-6 grid gap-3 sm:mt-7 sm:gap-4 xl:grid-cols-2">{(byCategory[active] ?? []).map((product) => <ProductCard key={product.id} product={product} canManage={canManage} onMove={move} {...edgesOf(product)} />)}</div>
+        <div className="mt-6 grid gap-3 sm:mt-7 sm:gap-4 xl:grid-cols-2">{(byCategory[active] ?? []).map((product) => <ProductCard key={product.id} {...cardProps(product)} />)}</div>
       )}
 
       {!products.length ? <p className="mt-10 rounded-2xl bg-white p-6 text-center font-semibold text-neutral-500">Još nema proizvoda. Dodaj prvi.</p> : null}
+
+      {moving ? (
+        <>
+          {/* Traka stoji na istom mestu dok se kartica seli, pa uzastopni klikovi pomeraju baš taj proizvod. */}
+          <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center p-4" style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}>
+            <div className="pointer-events-auto flex w-full max-w-md items-center gap-2 rounded-full bg-black p-2 pl-5 text-white shadow-2xl">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-bold">{moving.product.name}</p>
+                <p className="text-xs text-white/60">{moving.place}. mesto od {moving.total}</p>
+              </div>
+              <button type="button" onClick={() => move(moving.product, "up")} disabled={moving.first} className="touch-target grid place-items-center rounded-full bg-white/15 transition active:scale-90 disabled:opacity-30" aria-label={`Pomeri ${moving.product.name} gore`}><ArrowUp size={20} /></button>
+              <button type="button" onClick={() => move(moving.product, "down")} disabled={moving.last} className="touch-target grid place-items-center rounded-full bg-white/15 transition active:scale-90 disabled:opacity-30" aria-label={`Pomeri ${moving.product.name} dole`}><ArrowDown size={20} /></button>
+              <button type="button" onClick={() => setMovingId(null)} className="touch-target grid place-items-center rounded-full bg-white text-black transition active:scale-90" aria-label="Završi pomeranje"><Check size={20} /></button>
+            </div>
+          </div>
+          <div className="h-24" aria-hidden />
+        </>
+      ) : null}
     </>
   );
 }
