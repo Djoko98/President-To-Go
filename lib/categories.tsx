@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
-import { CakeSlice, Citrus, Coffee, CupSoda, EggFried, Fish, Flame, GlassWater, Martini, Pizza, Salad, Soup, Utensils, UtensilsCrossed } from "lucide-react";
+import { CakeSlice, Citrus, Coffee, CupSoda, EggFried, Fish, Flame, GlassWater, Leaf, Martini, Pizza, Salad, Soup, Utensils, UtensilsCrossed } from "lucide-react";
 import type { Category, CategoryGroup } from "@/types/domain";
 
 type IconProps = { className?: string; strokeWidth?: number; "aria-hidden"?: boolean };
@@ -62,6 +62,7 @@ const CATEGORY_ICONS: Record<string, CategoryIconComponent> = {
   "glavna-jela": Utensils,
   "corbe-i-potazi": Soup,
   "obrok-salate": Salad,
+  salate: Leaf,
   dezerti: CakeSlice,
   dodaci: BreadIcon,
 };

@@ -25,8 +25,9 @@ insert into public.categories(name, slug, group_key, image_url, position) values
   ('Glavna jela', 'glavna-jela', 'food', null, 9),
   ('Čorbe i potaži', 'corbe-i-potazi', 'food', null, 10),
   ('Obrok salate', 'obrok-salate', 'food', null, 11),
-  ('Dezerti', 'dezerti', 'food', null, 12),
-  ('Dodaci', 'dodaci', 'food', null, 13)
+  ('Salate', 'salate', 'food', null, 12),
+  ('Dezerti', 'dezerti', 'food', null, 13),
+  ('Dodaci', 'dodaci', 'food', null, 14)
 on conflict (slug) do update set name = excluded.name, group_key = excluded.group_key, image_url = excluded.image_url, position = excluded.position;
 
 with data(category_slug, name, slug, description, ingredients, price, accent_color, alcohol, prep, max_qty, position) as (values

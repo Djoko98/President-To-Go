@@ -49,23 +49,19 @@ export async function saveProduct(formData: FormData) {
   if (result.error) throw new Error(result.error.message); revalidatePath("/admin/proizvodi"); revalidatePath("/"); redirect("/admin/proizvodi");
 }
 
-export async function moveProduct(formData: FormData) {
+const reorderSchema = z.object({ categoryId: z.string().uuid(), ids: z.array(z.string().uuid()).min(1).max(500) });
+
+export async function reorderProducts(input: { categoryId: string; ids: string[] }) {
+  // Prima ceo redosled kategorije, a ne jedan pomeraj — admin klikne strelicu više puta zaredom i tek se onda snima.
   const { supabase } = await requireAdmin(["owner", "manager"]);
-  const id = z.string().uuid().parse(formData.get("id"));
-  const direction = z.enum(["up", "down"]).parse(formData.get("direction"));
-  const { data: current } = await supabase.from("products").select("id,category_id,position").eq("id", id).single();
-  if (!current) throw new Error("Proizvod nije pronađen.");
-  // Menja mesto sa najbližim susedom u istoj kategoriji; na krajevima lista nema sa kim da se zameni.
-  const neighbours = supabase.from("products").select("id,position").eq("category_id", current.category_id);
-  const { data: neighbour } = direction === "up"
-    ? await neighbours.lt("position", current.position).order("position", { ascending: false }).limit(1).maybeSingle()
-    : await neighbours.gt("position", current.position).order("position", { ascending: true }).limit(1).maybeSingle();
-  if (!neighbour) return;
-  const swapped = await Promise.all([
-    supabase.from("products").update({ position: neighbour.position }).eq("id", current.id),
-    supabase.from("products").update({ position: current.position }).eq("id", neighbour.id),
-  ]);
-  const error = swapped.find((result) => result.error)?.error;
+  const { categoryId, ids } = reorderSchema.parse(input);
+  const { data: existing, error: readError } = await supabase.from("products").select("id").eq("category_id", categoryId);
+  if (readError) throw new Error(readError.message);
+  // Lista mora da pokriva tačno proizvode te kategorije; inače je stranica zastarela i upis bi obrisao tuđu izmenu.
+  const known = new Set((existing ?? []).map((product) => product.id));
+  if (ids.length !== known.size || ids.some((id) => !known.has(id))) throw new Error("Redosled je u međuvremenu promenjen. Osveži stranicu.");
+  const written = await Promise.all(ids.map((id, position) => supabase.from("products").update({ position }).eq("id", id)));
+  const error = written.find((result) => result.error)?.error;
   if (error) throw new Error(error.message);
   revalidatePath("/admin/proizvodi"); revalidatePath("/");
 }
